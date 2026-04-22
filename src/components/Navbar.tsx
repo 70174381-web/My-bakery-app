@@ -36,7 +36,7 @@ const Navbar = () => {
               {l.label}
             </Link>
           ))}
-          <Link to="/cart">
+          <Link to="/checkout">
             <Button variant="ghost" size="icon" className="relative text-foreground hover:text-vendel-gold">
               <ShoppingCart className="h-5 w-5" />
               {totalItems > 0 && (
@@ -67,7 +67,7 @@ const Navbar = () => {
               {l.label}
             </Link>
           ))}
-          <Link to="/cart" onClick={() => setOpen(false)}>
+          <Link to="/checkout" onClick={() => setOpen(false)}>
             <Button variant="outline" size="sm" className="w-full mt-2 border-vendel-gold text-vendel-gold">
               <ShoppingCart className="h-4 w-4 mr-2" /> Cart {totalItems > 0 && `(${totalItems})`}
             </Button>
