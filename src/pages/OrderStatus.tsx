@@ -142,6 +142,16 @@ const OrderStatus = () => {
               </CardContent>
             </Card>
 
+            {canCancel && (
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={handleCancel}
+              >
+                <XCircle className="mr-2 h-4 w-4" /> Cancel Order
+              </Button>
+            )}
+
             {/* Estimated delivery timeline */}
             {order.requested_delivery_date && order.status !== "cancelled" && (
               <Card className="border-vendel-brown/20">
