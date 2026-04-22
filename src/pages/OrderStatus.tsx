@@ -125,6 +125,120 @@ const OrderStatus = () => {
               </CardContent>
             </Card>
 
+            {/* Estimated delivery timeline */}
+            {order.requested_delivery_date && order.status !== "cancelled" && (
+              <Card className="border-vendel-brown/20">
+                <CardHeader>
+                  <CardTitle className="font-playfair text-vendel-brown text-lg flex items-center gap-2">
+                    <Truck className="h-5 w-5" /> Estimated Delivery
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const placed = new Date(order.created_at);
+                    const delivery = new Date(order.requested_delivery_date);
+                    const now = new Date();
+                    const totalMs = delivery.getTime() - placed.getTime();
+                    const elapsedMs = now.getTime() - placed.getTime();
+                    const progress = order.status === "delivered" ? 100 : Math.min(Math.max(Math.round((elapsedMs / totalMs) * 100), 5), 95);
+                    const daysLeft = Math.max(0, Math.ceil((delivery.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+
+                    return (
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-sm text-vendel-brown/70">
+                          <span>Ordered {placed.toLocaleDateString()}</span>
+                          <span>Delivery {delivery.toLocaleDateString()}</span>
+                        </div>
+                        <div className="w-full bg-vendel-brown/10 rounded-full h-3 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-vendel-gold transition-all duration-500"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                        <p className="text-sm text-vendel-brown/60 text-center">
+                          {order.status === "delivered"
+                            ? "Your order has been delivered! 🎉"
+                            : daysLeft === 0
+                              ? "Arriving today!"
+                              : `Estimated ${daysLeft} day${daysLeft > 1 ? "s" : ""} remaining`}
+                        </p>
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Status history timeline */}
+            <Card className="border-vendel-brown/20">
+              <CardHeader>
+                <CardTitle className="font-playfair text-vendel-brown text-lg">Status History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const steps = [
+                    { key: "pending", label: "Order Placed", description: "Your order has been received" },
+                    { key: "confirmed", label: "Confirmed", description: "Payment verified & order confirmed" },
+                    { key: "delivered", label: "Delivered", description: "Order delivered to your address" },
+                  ];
+                  const statusOrder = ["pending", "confirmed", "delivered"];
+                  const isCancelled = order.status === "cancelled";
+                  const currentIdx = statusOrder.indexOf(order.status);
+
+                  return (
+                    <div className="relative pl-8 space-y-6">
+                      {steps.map((step, i) => {
+                        const isCompleted = !isCancelled && currentIdx >= i;
+                        const isCurrent = !isCancelled && currentIdx === i;
+
+                        return (
+                          <div key={step.key} className="relative">
+                            {/* Connector line */}
+                            {i < steps.length - 1 && (
+                              <div
+                                className={`absolute left-[-20px] top-7 w-0.5 h-[calc(100%+12px)] ${
+                                  !isCancelled && currentIdx > i ? "bg-vendel-gold" : "bg-vendel-brown/15"
+                                }`}
+                              />
+                            )}
+                            {/* Dot */}
+                            <div
+                              className={`absolute left-[-26px] top-1 w-3 h-3 rounded-full border-2 ${
+                                isCompleted
+                                  ? "bg-vendel-gold border-vendel-gold"
+                                  : "bg-vendel-cream border-vendel-brown/30"
+                              }`}
+                            />
+                            <div>
+                              <p className={`font-medium ${isCompleted ? "text-vendel-brown" : "text-vendel-brown/40"}`}>
+                                {step.label}
+                                {isCurrent && (
+                                  <span className="ml-2 text-xs font-normal text-vendel-gold">← Current</span>
+                                )}
+                              </p>
+                              <p className={`text-sm ${isCompleted ? "text-vendel-brown/60" : "text-vendel-brown/30"}`}>
+                                {step.description}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {isCancelled && (
+                        <div className="relative">
+                          <div className="absolute left-[-26px] top-1 w-3 h-3 rounded-full border-2 bg-red-500 border-red-500" />
+                          <div>
+                            <p className="font-medium text-red-700">Cancelled</p>
+                            <p className="text-sm text-red-500/70">This order has been cancelled</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+
             {/* Order details */}
             <Card className="border-vendel-brown/20">
               <CardHeader>
