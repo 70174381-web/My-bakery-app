@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Package, Clock, CheckCircle, XCircle, ArrowLeft, Truck } from "lucide-react";
+import { toast } from "sonner";
 
 interface OrderItem {
   id: string;
@@ -71,6 +72,22 @@ const OrderStatus = () => {
     fetchLatestOrder();
   }, [user, authLoading]);
 
+  const canCancel = order?.status === "pending";
+
+  const handleCancel = async () => {
+    if (!order) return;
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: "cancelled" })
+      .eq("id", order.id);
+    if (error) {
+      toast.error("Failed to cancel order");
+    } else {
+      setOrder({ ...order, status: "cancelled" });
+      toast.success("Order cancelled");
+    }
+  };
+
   const cfg = statusConfig[order?.status ?? "pending"] ?? statusConfig.pending;
   const StatusIcon = cfg.icon;
 
@@ -124,6 +141,16 @@ const OrderStatus = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {canCancel && (
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={handleCancel}
+              >
+                <XCircle className="mr-2 h-4 w-4" /> Cancel Order
+              </Button>
+            )}
 
             {/* Estimated delivery timeline */}
             {order.requested_delivery_date && order.status !== "cancelled" && (
