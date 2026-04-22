@@ -11,6 +11,7 @@ import Shop from "./pages/Shop.tsx";
 import AdminLogin from "./pages/AdminLogin.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import Checkout from "./pages/Checkout.tsx";
+import OrderStatus from "./pages/OrderStatus.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
