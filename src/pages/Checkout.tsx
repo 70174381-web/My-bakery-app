@@ -1,16 +1,54 @@
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Minus,
+  Plus,
+  Trash2,
+  ShoppingBag,
+  ArrowLeft,
+  ArrowRight,
+  CreditCard,
+  Smartphone,
+  Landmark,
+  Loader2,
+  CheckCircle2,
+} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
-const SHIPPING_FEE = 200; // flat estimate in Rs.
+const SHIPPING_FEE = 200;
+
+type Step = "cart" | "payment" | "success";
+type PaymentMethod = "card" | "easypaisa" | "bank_transfer";
 
 const Checkout = () => {
-  const { items, updateQuantity, removeItem, totalPrice, totalItems, maxLeadTime, clearCart } = useCart();
+  const { items, updateQuantity, removeItem, totalPrice, totalItems, maxLeadTime, clearCart } =
+    useCart();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const [step, setStep] = useState<Step>("cart");
+  const [placing, setPlacing] = useState(false);
+
+  // Contact fields
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState(user?.email ?? "");
+  const [address, setAddress] = useState("");
+
+  // Payment
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("easypaisa");
 
   const shippingEstimate = totalItems > 0 ? SHIPPING_FEE : 0;
   const grandTotal = totalPrice + shippingEstimate;
@@ -23,7 +61,8 @@ const Checkout = () => {
     month: "long",
   });
 
-  if (items.length === 0) {
+  // ── Empty cart ──
+  if (items.length === 0 && step !== "success") {
     return (
       <div className="min-h-screen">
         <Navbar />
@@ -31,14 +70,135 @@ const Checkout = () => {
           <div className="container mx-auto max-w-2xl text-center py-20">
             <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
             <h1 className="font-heading text-3xl text-foreground mb-2">Your cart is empty</h1>
-            <p className="text-muted-foreground mb-6">
-              Browse our menu and add some treats!
-            </p>
+            <p className="text-muted-foreground mb-6">Browse our menu and add some treats!</p>
             <Link to="/shop">
               <Button className="gap-2">
                 <ArrowLeft className="w-4 h-4" /> Back to Shop
               </Button>
             </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // ── Validate before proceeding to payment ──
+  const canProceedToPayment = items.length > 0;
+
+  // ── Validate payment form ──
+  const contactValid =
+    name.trim().length >= 2 &&
+    phone.trim().length >= 7 &&
+    address.trim().length >= 5;
+
+  // ── Place order ──
+  const handlePlaceOrder = async () => {
+    if (!contactValid) return;
+    setPlacing(true);
+
+    try {
+      // If not signed in, place as guest (user_id will be a placeholder)
+      const userId = user?.id;
+
+      if (!userId) {
+        toast({
+          title: "Sign in required",
+          description: "Please create an account or sign in to place an order.",
+          variant: "destructive",
+        });
+        setPlacing(false);
+        return;
+      }
+
+      // Create order
+      const { data: order, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          user_id: userId,
+          total_amount: grandTotal,
+          delivery_address: address,
+          payment_method: paymentMethod,
+          requested_delivery_date: earliestDate.toISOString().split("T")[0],
+          status: "pending",
+        })
+        .select("id")
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItems = items.map((item) => ({
+        order_id: order.id,
+        product_id: item.productId,
+        quantity: item.quantity,
+        unit_price: item.price,
+      }));
+
+      const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
+      if (itemsError) throw itemsError;
+
+      clearCart();
+      setStep("success");
+    } catch (err: any) {
+      toast({
+        title: "Order failed",
+        description: err.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setPlacing(false);
+    }
+  };
+
+  // ── Success ──
+  if (step === "success") {
+    return (
+      <div className="min-h-screen">
+        <Navbar />
+        <main className="pt-24 pb-16 px-4">
+          <div className="container mx-auto max-w-lg text-center py-20">
+            <CheckCircle2 className="w-16 h-16 mx-auto text-vendel-gold mb-4" />
+            <h1 className="font-heading text-3xl text-foreground mb-2">Order Placed!</h1>
+            <p className="text-muted-foreground mb-2">
+              Thank you, {name}! Your order has been submitted.
+            </p>
+            {paymentMethod === "easypaisa" && (
+              <Card className="border-vendel-gold/30 mt-6 text-left">
+                <CardContent className="p-5 space-y-2">
+                  <p className="font-heading text-base text-foreground">
+                    Send Rs. {grandTotal.toLocaleString()} via EasyPaisa to:
+                  </p>
+                  <p className="font-body text-lg font-semibold text-vendel-gold">03304582288</p>
+                  <p className="text-xs text-muted-foreground">
+                    After sending, your order will be confirmed once we verify payment.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+            {paymentMethod === "bank_transfer" && (
+              <Card className="border-vendel-gold/30 mt-6 text-left">
+                <CardContent className="p-5 space-y-2">
+                  <p className="font-heading text-base text-foreground">
+                    Transfer Rs. {grandTotal.toLocaleString()} to:
+                  </p>
+                  <p className="font-body text-sm text-foreground">
+                    <span className="font-semibold">IBAN:</span> PK10TMFB0000000077895231
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    After transfer, your order will be confirmed once we verify payment.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+            {paymentMethod === "card" && (
+              <p className="text-sm text-muted-foreground mt-4">
+                Card payment link will be sent to your phone/email shortly.
+              </p>
+            )}
+            <Button className="mt-8 gap-2" onClick={() => navigate("/shop")}>
+              <ArrowLeft className="w-4 h-4" /> Continue Shopping
+            </Button>
           </div>
         </main>
         <Footer />
@@ -54,105 +214,285 @@ const Checkout = () => {
         <div className="container mx-auto max-w-4xl">
           {/* Header */}
           <div className="mb-8">
-            <Link
-              to="/shop"
-              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-vendel-gold transition-colors mb-4"
-            >
-              <ArrowLeft className="w-4 h-4" /> Continue shopping
-            </Link>
-            <h1 className="font-heading text-3xl md:text-4xl text-foreground">Checkout</h1>
-            <p className="text-muted-foreground mt-1">
-              {totalItems} item{totalItems !== 1 && "s"} in your cart
-            </p>
+            {step === "cart" ? (
+              <Link
+                to="/shop"
+                className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-vendel-gold transition-colors mb-4"
+              >
+                <ArrowLeft className="w-4 h-4" /> Continue shopping
+              </Link>
+            ) : (
+              <button
+                onClick={() => setStep("cart")}
+                className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-vendel-gold transition-colors mb-4"
+              >
+                <ArrowLeft className="w-4 h-4" /> Back to cart
+              </button>
+            )}
+            <h1 className="font-heading text-3xl md:text-4xl text-foreground">
+              {step === "cart" ? "Your Cart" : "Contact & Payment"}
+            </h1>
+
+            {/* Step indicator */}
+            <div className="flex items-center gap-2 mt-3">
+              <span
+                className={`text-xs font-body font-semibold px-3 py-1 rounded-full ${
+                  step === "cart"
+                    ? "bg-vendel-gold text-white"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                1. Cart
+              </span>
+              <span className="text-muted-foreground text-xs">→</span>
+              <span
+                className={`text-xs font-body font-semibold px-3 py-1 rounded-full ${
+                  step === "payment"
+                    ? "bg-vendel-gold text-white"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                2. Payment
+              </span>
+            </div>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Cart items */}
+            {/* Left column */}
             <div className="lg:col-span-2 space-y-4">
-              {items.map((item) => (
-                <Card key={item.productId} className="border-border/50">
-                  <CardContent className="p-4 flex gap-4">
-                    {/* Image */}
-                    <div className="w-20 h-20 rounded-lg bg-muted overflow-hidden flex-shrink-0">
-                      {item.imageUrl ? (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                          No img
+              {step === "cart" && (
+                <>
+                  {items.map((item) => (
+                    <Card key={item.productId} className="border-border/50">
+                      <CardContent className="p-4 flex gap-4">
+                        <div className="w-20 h-20 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+                          {item.imageUrl ? (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                              No img
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-heading text-lg text-foreground leading-tight truncate">
+                            {item.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mt-0.5">
+                            Rs. {item.price.toLocaleString()} each
+                          </p>
+                          <div className="flex items-center gap-2 mt-3">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                            >
+                              <Minus className="w-3 h-3" />
+                            </Button>
+                            <span className="font-body text-sm w-8 text-center text-foreground">
+                              {item.quantity}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                            >
+                              <Plus className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive ml-auto"
+                              onClick={() => removeItem(item.productId)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <span className="font-heading text-lg text-foreground">
+                            Rs. {(item.price * item.quantity).toLocaleString()}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearCart}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" /> Clear cart
+                  </Button>
+                </>
+              )}
 
-                    {/* Details */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-heading text-lg text-foreground leading-tight truncate">
-                        {item.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-0.5">
-                        Rs. {item.price.toLocaleString()} each
-                      </p>
-
-                      {/* Quantity controls */}
-                      <div className="flex items-center gap-2 mt-3">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                        >
-                          <Minus className="w-3 h-3" />
-                        </Button>
-                        <span className="font-body text-sm w-8 text-center text-foreground">
-                          {item.quantity}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                        >
-                          <Plus className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive ml-auto"
-                          onClick={() => removeItem(item.productId)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+              {step === "payment" && (
+                <div className="space-y-6">
+                  {/* Contact info */}
+                  <Card className="border-border/50">
+                    <CardContent className="p-6 space-y-4">
+                      <h2 className="font-heading text-xl text-foreground">Contact Details</h2>
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Full Name *</Label>
+                          <Input
+                            id="name"
+                            placeholder="Your name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            maxLength={100}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="phone">Phone / WhatsApp *</Label>
+                          <Input
+                            id="phone"
+                            placeholder="03XX XXXXXXX"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            maxLength={20}
+                          />
+                        </div>
                       </div>
-                    </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email (optional)</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          maxLength={255}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="address">Delivery Address *</Label>
+                        <Input
+                          id="address"
+                          placeholder="Full address for delivery"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          maxLength={500}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                    {/* Line total */}
-                    <div className="text-right flex-shrink-0">
-                      <span className="font-heading text-lg text-foreground">
-                        Rs. {(item.price * item.quantity).toLocaleString()}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  {/* Payment method */}
+                  <Card className="border-border/50">
+                    <CardContent className="p-6 space-y-4">
+                      <h2 className="font-heading text-xl text-foreground">Payment Method</h2>
+                      <RadioGroup
+                        value={paymentMethod}
+                        onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}
+                        className="space-y-3"
+                      >
+                        {/* EasyPaisa */}
+                        <label
+                          htmlFor="pm-easypaisa"
+                          className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-colors ${
+                            paymentMethod === "easypaisa"
+                              ? "border-vendel-gold bg-vendel-gold/5"
+                              : "border-border hover:border-vendel-gold/50"
+                          }`}
+                        >
+                          <RadioGroupItem value="easypaisa" id="pm-easypaisa" className="mt-0.5" />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <Smartphone className="w-4 h-4 text-vendel-gold" />
+                              <span className="font-heading text-base text-foreground">
+                                EasyPaisa
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Send to <span className="font-semibold">03304582288</span> — we'll
+                              confirm once received.
+                            </p>
+                          </div>
+                        </label>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearCart}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="w-4 h-4 mr-1" /> Clear cart
-              </Button>
+                        {/* Bank Transfer */}
+                        <label
+                          htmlFor="pm-bank"
+                          className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-colors ${
+                            paymentMethod === "bank_transfer"
+                              ? "border-vendel-gold bg-vendel-gold/5"
+                              : "border-border hover:border-vendel-gold/50"
+                          }`}
+                        >
+                          <RadioGroupItem value="bank_transfer" id="pm-bank" className="mt-0.5" />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <Landmark className="w-4 h-4 text-vendel-gold" />
+                              <span className="font-heading text-base text-foreground">
+                                Bank Transfer (IBAN)
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              IBAN: <span className="font-semibold">PK10TMFB0000000077895231</span>
+                            </p>
+                          </div>
+                        </label>
+
+                        {/* Card online */}
+                        <label
+                          htmlFor="pm-card"
+                          className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-colors ${
+                            paymentMethod === "card"
+                              ? "border-vendel-gold bg-vendel-gold/5"
+                              : "border-border hover:border-vendel-gold/50"
+                          }`}
+                        >
+                          <RadioGroupItem value="card" id="pm-card" className="mt-0.5" />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <CreditCard className="w-4 h-4 text-vendel-gold" />
+                              <span className="font-heading text-base text-foreground">
+                                Card Online
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              We'll send a payment link to your phone/email.
+                            </p>
+                          </div>
+                        </label>
+                      </RadioGroup>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
 
-            {/* Order summary */}
+            {/* Right column — Order summary */}
             <div>
               <Card className="border-border/50 sticky top-24">
                 <CardContent className="p-6 space-y-4">
                   <h2 className="font-heading text-xl text-foreground">Order Summary</h2>
+
+                  {/* Item list (compact in payment step) */}
+                  {step === "payment" && (
+                    <div className="space-y-2 text-sm">
+                      {items.map((item) => (
+                        <div key={item.productId} className="flex justify-between text-foreground">
+                          <span className="truncate mr-2">
+                            {item.name} × {item.quantity}
+                          </span>
+                          <span className="flex-shrink-0">
+                            Rs. {(item.price * item.quantity).toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                      <Separator />
+                    </div>
+                  )}
 
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between text-foreground">
@@ -174,17 +514,44 @@ const Checkout = () => {
 
                   {maxLeadTime > 0 && (
                     <p className="text-xs text-muted-foreground">
-                      Earliest delivery: <span className="font-semibold">{dateStr}</span> (based on{" "}
+                      Earliest delivery: <span className="font-semibold">{dateStr}</span> (
                       {maxLeadTime}-day lead time)
                     </p>
                   )}
 
-                  <Button className="w-full mt-2" size="lg" disabled>
-                    Proceed to Payment
-                  </Button>
-                  <p className="text-xs text-center text-muted-foreground">
-                    Payment integration coming soon
-                  </p>
+                  {step === "cart" && (
+                    <Button
+                      className="w-full mt-2 gap-2"
+                      size="lg"
+                      disabled={!canProceedToPayment}
+                      onClick={() => setStep("payment")}
+                    >
+                      Continue to Payment <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
+
+                  {step === "payment" && (
+                    <Button
+                      className="w-full mt-2 gap-2"
+                      size="lg"
+                      disabled={!contactValid || placing}
+                      onClick={handlePlaceOrder}
+                    >
+                      {placing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" /> Placing order…
+                        </>
+                      ) : (
+                        "Place Order"
+                      )}
+                    </Button>
+                  )}
+
+                  {step === "payment" && !contactValid && (
+                    <p className="text-xs text-center text-muted-foreground">
+                      Fill in all required fields to place your order
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>
