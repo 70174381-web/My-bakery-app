@@ -72,6 +72,22 @@ const OrderStatus = () => {
     fetchLatestOrder();
   }, [user, authLoading]);
 
+  const canCancel = order?.status === "pending";
+
+  const handleCancel = async () => {
+    if (!order) return;
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: "cancelled" })
+      .eq("id", order.id);
+    if (error) {
+      toast.error("Failed to cancel order");
+    } else {
+      setOrder({ ...order, status: "cancelled" });
+      toast.success("Order cancelled");
+    }
+  };
+
   const cfg = statusConfig[order?.status ?? "pending"] ?? statusConfig.pending;
   const StatusIcon = cfg.icon;
 
