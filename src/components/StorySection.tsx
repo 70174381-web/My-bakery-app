@@ -4,7 +4,7 @@ const StorySection = () => (
   <section id="story" className="py-20 bg-card">
     <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
       <div className="order-2 md:order-1">
-        <p className="font-cursive text-vendel-gold text-2xl mb-2">Our Story</p>
+        <p className="font-cursive text-vendel-rose text-2xl mb-2">Our Story</p>
         <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-6">
           Born From Passion, Built With Code
         </h2>

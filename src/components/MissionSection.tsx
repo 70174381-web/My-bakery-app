@@ -4,7 +4,7 @@ const MissionSection = () => (
   <section className="py-20 bg-background">
     <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
       <div className="relative">
-        <div className="absolute -inset-4 bg-vendel-gold/10 rounded-2xl blur-xl" />
+        <div className="absolute -inset-4 bg-vendel-rose/10 rounded-2xl blur-xl" />
         <img
           src={missionImg}
           alt="Vendel Bakes mission — crafting joy through baking"
@@ -13,7 +13,7 @@ const MissionSection = () => (
         />
       </div>
       <div>
-        <p className="font-cursive text-vendel-gold text-2xl mb-2">Our Mission</p>
+        <p className="font-cursive text-vendel-rose text-2xl mb-2">Our Mission</p>
         <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-6">
           Crafting Joy, One Bite at a Time
         </h2>
