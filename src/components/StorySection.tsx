@@ -1,7 +1,7 @@
 import goldenAgeImg from "@/assets/vendel_golden_age.png";
 
 const StorySection = () => (
-  <section id="story" className="py-20 bg-card">
+  <section id="story" className="py-20 bg-vendel-warm">
     <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
       <div className="order-2 md:order-1">
         <p className="font-cursive text-vendel-rose text-2xl mb-2">Our Story</p>
