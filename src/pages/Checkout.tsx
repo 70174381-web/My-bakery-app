@@ -158,18 +158,18 @@ const Checkout = () => {
         <Navbar />
         <main className="pt-24 pb-16 px-4">
           <div className="container mx-auto max-w-lg text-center py-20">
-            <CheckCircle2 className="w-16 h-16 mx-auto text-vendel-gold mb-4" />
+            <CheckCircle2 className="w-16 h-16 mx-auto text-vendel-rose mb-4" />
             <h1 className="font-heading text-3xl text-foreground mb-2">Order Placed!</h1>
             <p className="text-muted-foreground mb-2">
               Thank you, {name}! Your order has been submitted.
             </p>
             {paymentMethod === "easypaisa" && (
-              <Card className="border-vendel-gold/30 mt-6 text-left">
+              <Card className="border-vendel-rose/30 mt-6 text-left">
                 <CardContent className="p-5 space-y-2">
                   <p className="font-heading text-base text-foreground">
                     Send Rs. {grandTotal.toLocaleString()} via EasyPaisa to:
                   </p>
-                  <p className="font-body text-lg font-semibold text-vendel-gold">03304582288</p>
+                  <p className="font-body text-lg font-semibold text-vendel-rose">03304582288</p>
                   <p className="text-xs text-muted-foreground">
                     After sending, your order will be confirmed once we verify payment.
                   </p>
@@ -177,7 +177,7 @@ const Checkout = () => {
               </Card>
             )}
             {paymentMethod === "bank_transfer" && (
-              <Card className="border-vendel-gold/30 mt-6 text-left">
+              <Card className="border-vendel-rose/30 mt-6 text-left">
                 <CardContent className="p-5 space-y-2">
                   <p className="font-heading text-base text-foreground">
                     Transfer Rs. {grandTotal.toLocaleString()} to:
@@ -217,14 +217,14 @@ const Checkout = () => {
             {step === "cart" ? (
               <Link
                 to="/shop"
-                className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-vendel-gold transition-colors mb-4"
+                className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-vendel-rose transition-colors mb-4"
               >
                 <ArrowLeft className="w-4 h-4" /> Continue shopping
               </Link>
             ) : (
               <button
                 onClick={() => setStep("cart")}
-                className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-vendel-gold transition-colors mb-4"
+                className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-vendel-rose transition-colors mb-4"
               >
                 <ArrowLeft className="w-4 h-4" /> Back to cart
               </button>
@@ -238,7 +238,7 @@ const Checkout = () => {
               <span
                 className={`text-xs font-body font-semibold px-3 py-1 rounded-full ${
                   step === "cart"
-                    ? "bg-vendel-gold text-white"
+                    ? "bg-vendel-rose text-white"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
@@ -248,7 +248,7 @@ const Checkout = () => {
               <span
                 className={`text-xs font-body font-semibold px-3 py-1 rounded-full ${
                   step === "payment"
-                    ? "bg-vendel-gold text-white"
+                    ? "bg-vendel-rose text-white"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
@@ -400,14 +400,14 @@ const Checkout = () => {
                           htmlFor="pm-easypaisa"
                           className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-colors ${
                             paymentMethod === "easypaisa"
-                              ? "border-vendel-gold bg-vendel-gold/5"
-                              : "border-border hover:border-vendel-gold/50"
+                              ? "border-vendel-rose bg-vendel-rose/5"
+                              : "border-border hover:border-vendel-rose/50"
                           }`}
                         >
                           <RadioGroupItem value="easypaisa" id="pm-easypaisa" className="mt-0.5" />
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <Smartphone className="w-4 h-4 text-vendel-gold" />
+                              <Smartphone className="w-4 h-4 text-vendel-rose" />
                               <span className="font-heading text-base text-foreground">
                                 EasyPaisa
                               </span>
@@ -424,14 +424,14 @@ const Checkout = () => {
                           htmlFor="pm-bank"
                           className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-colors ${
                             paymentMethod === "bank_transfer"
-                              ? "border-vendel-gold bg-vendel-gold/5"
-                              : "border-border hover:border-vendel-gold/50"
+                              ? "border-vendel-rose bg-vendel-rose/5"
+                              : "border-border hover:border-vendel-rose/50"
                           }`}
                         >
                           <RadioGroupItem value="bank_transfer" id="pm-bank" className="mt-0.5" />
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <Landmark className="w-4 h-4 text-vendel-gold" />
+                              <Landmark className="w-4 h-4 text-vendel-rose" />
                               <span className="font-heading text-base text-foreground">
                                 Bank Transfer (IBAN)
                               </span>
@@ -447,14 +447,14 @@ const Checkout = () => {
                           htmlFor="pm-card"
                           className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-colors ${
                             paymentMethod === "card"
-                              ? "border-vendel-gold bg-vendel-gold/5"
-                              : "border-border hover:border-vendel-gold/50"
+                              ? "border-vendel-rose bg-vendel-rose/5"
+                              : "border-border hover:border-vendel-rose/50"
                           }`}
                         >
                           <RadioGroupItem value="card" id="pm-card" className="mt-0.5" />
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <CreditCard className="w-4 h-4 text-vendel-gold" />
+                              <CreditCard className="w-4 h-4 text-vendel-rose" />
                               <span className="font-heading text-base text-foreground">
                                 Card Online
                               </span>
