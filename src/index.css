@@ -4,90 +4,90 @@
 
 @layer base {
   :root {
-    --background: 30 25% 97%;
-    --foreground: 25 30% 12%;
+    --background: 0 0% 97%;
+    --foreground: 220 5% 20%;
 
-    --card: 33 30% 95%;
-    --card-foreground: 25 30% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 5% 20%;
 
-    --popover: 30 25% 97%;
-    --popover-foreground: 25 30% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 5% 20%;
 
-    --primary: 25 60% 20%;
-    --primary-foreground: 38 60% 90%;
+    --primary: 220 5% 35%;
+    --primary-foreground: 0 0% 97%;
 
-    --secondary: 33 20% 90%;
-    --secondary-foreground: 25 30% 12%;
+    --secondary: 0 20% 92%;
+    --secondary-foreground: 220 5% 20%;
 
-    --muted: 33 15% 92%;
-    --muted-foreground: 25 10% 45%;
+    --muted: 0 10% 93%;
+    --muted-foreground: 220 3% 45%;
 
-    --accent: 38 72% 50%;
-    --accent-foreground: 25 60% 10%;
+    --accent: 0 25% 78%;
+    --accent-foreground: 220 5% 15%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 33 20% 85%;
-    --input: 33 20% 85%;
-    --ring: 38 72% 50%;
+    --border: 0 10% 88%;
+    --input: 0 10% 88%;
+    --ring: 0 25% 78%;
 
     --radius: 0.75rem;
 
-    --vendel-gold: 38 72% 50%;
-    --vendel-cream: 38 60% 95%;
-    --vendel-brown-dark: 25 60% 15%;
-    --vendel-brown: 25 45% 25%;
-    --vendel-warm: 30 30% 92%;
-    --vendel-rose: 350 50% 65%;
+    --vendel-charcoal: 220 5% 35%;
+    --vendel-charcoal-dark: 220 5% 25%;
+    --vendel-rose: 0 25% 78%;
+    --vendel-rose-light: 0 25% 92%;
+    --vendel-cream: 0 10% 96%;
+    --vendel-warm: 0 15% 94%;
 
-    --sidebar-background: 25 60% 15%;
-    --sidebar-foreground: 38 60% 90%;
-    --sidebar-primary: 38 72% 50%;
-    --sidebar-primary-foreground: 25 60% 10%;
-    --sidebar-accent: 25 45% 22%;
-    --sidebar-accent-foreground: 38 60% 90%;
-    --sidebar-border: 25 40% 20%;
-    --sidebar-ring: 38 72% 50%;
+    --sidebar-background: 220 5% 25%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 0 25% 78%;
+    --sidebar-primary-foreground: 220 5% 15%;
+    --sidebar-accent: 220 5% 30%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 220 5% 30%;
+    --sidebar-ring: 0 25% 78%;
   }
 
   .dark {
-    --background: 25 30% 8%;
-    --foreground: 38 40% 92%;
+    --background: 220 5% 8%;
+    --foreground: 0 10% 92%;
 
-    --card: 25 25% 12%;
-    --card-foreground: 38 40% 92%;
+    --card: 220 5% 12%;
+    --card-foreground: 0 10% 92%;
 
-    --popover: 25 25% 12%;
-    --popover-foreground: 38 40% 92%;
+    --popover: 220 5% 12%;
+    --popover-foreground: 0 10% 92%;
 
-    --primary: 38 72% 50%;
-    --primary-foreground: 25 60% 10%;
+    --primary: 0 25% 78%;
+    --primary-foreground: 220 5% 10%;
 
-    --secondary: 25 20% 18%;
-    --secondary-foreground: 38 40% 92%;
+    --secondary: 220 5% 18%;
+    --secondary-foreground: 0 10% 92%;
 
-    --muted: 25 15% 18%;
-    --muted-foreground: 30 10% 55%;
+    --muted: 220 5% 18%;
+    --muted-foreground: 0 5% 55%;
 
-    --accent: 38 72% 50%;
-    --accent-foreground: 25 60% 10%;
+    --accent: 0 25% 78%;
+    --accent-foreground: 220 5% 10%;
 
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 25 20% 20%;
-    --input: 25 20% 20%;
-    --ring: 38 72% 50%;
+    --border: 220 5% 20%;
+    --input: 220 5% 20%;
+    --ring: 0 25% 78%;
 
-    --sidebar-background: 25 30% 6%;
-    --sidebar-foreground: 38 60% 90%;
-    --sidebar-primary: 38 72% 50%;
-    --sidebar-primary-foreground: 25 60% 10%;
-    --sidebar-accent: 25 20% 14%;
-    --sidebar-accent-foreground: 38 60% 90%;
-    --sidebar-border: 25 20% 14%;
-    --sidebar-ring: 38 72% 50%;
+    --sidebar-background: 220 5% 6%;
+    --sidebar-foreground: 0 10% 92%;
+    --sidebar-primary: 0 25% 78%;
+    --sidebar-primary-foreground: 220 5% 10%;
+    --sidebar-accent: 220 5% 14%;
+    --sidebar-accent-foreground: 0 10% 92%;
+    --sidebar-border: 220 5% 14%;
+    --sidebar-ring: 0 25% 78%;
   }
 }
 
@@ -97,21 +97,26 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Lato', sans-serif;
+    font-family: 'Montserrat', sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
   }
 }
 
 @layer utilities {
   .font-cursive {
-    font-family: 'Great Vibes', cursive;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+    letter-spacing: 0.05em;
   }
   .font-heading {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
   }
   .font-body {
-    font-family: 'Lato', sans-serif;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
   }
 }

@@ -4,21 +4,21 @@ const Footer = () => (
   <footer className="bg-primary text-primary-foreground py-12">
     <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
       <div>
-        <h3 className="font-cursive text-3xl text-vendel-gold mb-3">Vendel Bakes</h3>
+        <h3 className="font-heading text-2xl font-semibold text-vendel-rose mb-3">Vendel Bakes</h3>
         <p className="text-sm text-primary-foreground/70 font-body leading-relaxed">
-          Handcrafted with love from a coder's oven. Every order baked fresh, just for you.
+          Artisan Brownies &amp; Baked Goods — handcrafted with love, delivered to your door.
         </p>
       </div>
       <div>
-        <h4 className="font-heading text-lg mb-3">Quick Links</h4>
+        <h4 className="font-heading text-lg font-semibold mb-3">Quick Links</h4>
         <ul className="space-y-2 text-sm font-body text-primary-foreground/70">
-          <li><Link to="/shop" className="hover:text-vendel-gold transition-colors">Shop</Link></li>
-          <li><Link to="/track" className="hover:text-vendel-gold transition-colors">Track Order</Link></li>
-          <li><Link to="/admin/login" className="hover:text-vendel-gold transition-colors">Admin</Link></li>
+          <li><Link to="/shop" className="hover:text-vendel-rose transition-colors">Shop</Link></li>
+          <li><Link to="/track" className="hover:text-vendel-rose transition-colors">Track Order</Link></li>
+          <li><Link to="/admin/login" className="hover:text-vendel-rose transition-colors">Admin</Link></li>
         </ul>
       </div>
       <div>
-        <h4 className="font-heading text-lg mb-3">Payment Methods</h4>
+        <h4 className="font-heading text-lg font-semibold mb-3">Payment Methods</h4>
         <ul className="space-y-2 text-sm font-body text-primary-foreground/70">
           <li>EasyPaisa: 0330-458-2288</li>
           <li>Bank: PK10TMFB0000000077895231</li>

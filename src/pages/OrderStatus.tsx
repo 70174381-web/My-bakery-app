@@ -99,19 +99,19 @@ const OrderStatus = () => {
     <div className="min-h-screen flex flex-col bg-vendel-cream">
       <Navbar />
       <main className="flex-1 container mx-auto px-4 py-10 max-w-2xl">
-        <Button variant="ghost" className="mb-6 text-vendel-brown" onClick={() => navigate(-1)}>
+        <Button variant="ghost" className="mb-6 text-vendel-charcoal" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
 
-        <h1 className="font-playfair text-3xl font-bold text-vendel-brown mb-6">Order Status</h1>
+        <h1 className="font-heading text-3xl font-bold text-vendel-charcoal mb-6">Order Status</h1>
 
         {loading || authLoading ? (
-          <p className="text-vendel-brown/60">Loading…</p>
+          <p className="text-vendel-charcoal/60">Loading…</p>
         ) : !user ? (
           <Card>
             <CardContent className="py-10 text-center space-y-4">
-              <p className="text-vendel-brown/70">Please sign in to view your orders.</p>
-              <Button onClick={() => navigate("/admin/login")} className="bg-vendel-brown hover:bg-vendel-brown/90 text-vendel-cream">
+              <p className="text-vendel-charcoal/70">Please sign in to view your orders.</p>
+              <Button onClick={() => navigate("/admin/login")} className="bg-vendel-charcoal hover:bg-vendel-charcoal/90 text-vendel-cream">
                 Sign In
               </Button>
             </CardContent>
@@ -119,9 +119,9 @@ const OrderStatus = () => {
         ) : !order ? (
           <Card>
             <CardContent className="py-10 text-center space-y-4">
-              <Package className="mx-auto h-12 w-12 text-vendel-brown/30" />
-              <p className="text-vendel-brown/70">You haven't placed any orders yet.</p>
-              <Button onClick={() => navigate("/shop")} className="bg-vendel-brown hover:bg-vendel-brown/90 text-vendel-cream">
+              <Package className="mx-auto h-12 w-12 text-vendel-charcoal/30" />
+              <p className="text-vendel-charcoal/70">You haven't placed any orders yet.</p>
+              <Button onClick={() => navigate("/shop")} className="bg-vendel-charcoal hover:bg-vendel-charcoal/90 text-vendel-cream">
                 Browse Shop
               </Button>
             </CardContent>
@@ -129,11 +129,11 @@ const OrderStatus = () => {
         ) : (
           <div className="space-y-6">
             {/* Status banner */}
-            <Card className="border-vendel-brown/20">
+            <Card className="border-vendel-charcoal/20">
               <CardContent className="py-6 flex items-center gap-4">
-                <StatusIcon className="h-10 w-10 text-vendel-brown" />
+                <StatusIcon className="h-10 w-10 text-vendel-charcoal" />
                 <div className="flex-1">
-                  <p className="text-sm text-vendel-brown/60">Order #{order.id.slice(0, 8)}</p>
+                  <p className="text-sm text-vendel-charcoal/60">Order #{order.id.slice(0, 8)}</p>
                   <div className="flex items-center gap-3 mt-1">
                     <Badge className={cfg.color}>{cfg.label}</Badge>
                     {order.payment_confirmed ? (
@@ -172,9 +172,9 @@ const OrderStatus = () => {
 
             {/* Estimated delivery timeline */}
             {order.requested_delivery_date && order.status !== "cancelled" && (
-              <Card className="border-vendel-brown/20">
+              <Card className="border-vendel-charcoal/20">
                 <CardHeader>
-                  <CardTitle className="font-playfair text-vendel-brown text-lg flex items-center gap-2">
+                  <CardTitle className="font-heading text-vendel-charcoal text-lg flex items-center gap-2">
                     <Truck className="h-5 w-5" /> Estimated Delivery
                   </CardTitle>
                 </CardHeader>
@@ -190,17 +190,17 @@ const OrderStatus = () => {
 
                     return (
                       <div className="space-y-3">
-                        <div className="flex justify-between text-sm text-vendel-brown/70">
+                        <div className="flex justify-between text-sm text-vendel-charcoal/70">
                           <span>Ordered {placed.toLocaleDateString()}</span>
                           <span>Delivery {delivery.toLocaleDateString()}</span>
                         </div>
-                        <div className="w-full bg-vendel-brown/10 rounded-full h-3 overflow-hidden">
+                        <div className="w-full bg-vendel-charcoal/10 rounded-full h-3 overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-vendel-gold transition-all duration-500"
+                            className="h-full rounded-full bg-vendel-rose transition-all duration-500"
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <p className="text-sm text-vendel-brown/60 text-center">
+                        <p className="text-sm text-vendel-charcoal/60 text-center">
                           {order.status === "delivered"
                             ? "Your order has been delivered! 🎉"
                             : daysLeft === 0
@@ -215,9 +215,9 @@ const OrderStatus = () => {
             )}
 
             {/* Status history timeline */}
-            <Card className="border-vendel-brown/20">
+            <Card className="border-vendel-charcoal/20">
               <CardHeader>
-                <CardTitle className="font-playfair text-vendel-brown text-lg">Status History</CardTitle>
+                <CardTitle className="font-heading text-vendel-charcoal text-lg">Status History</CardTitle>
               </CardHeader>
               <CardContent>
                 {(() => {
@@ -242,7 +242,7 @@ const OrderStatus = () => {
                             {i < steps.length - 1 && (
                               <div
                                 className={`absolute left-[-20px] top-7 w-0.5 h-[calc(100%+12px)] ${
-                                  !isCancelled && currentIdx > i ? "bg-vendel-gold" : "bg-vendel-brown/15"
+                                  !isCancelled && currentIdx > i ? "bg-vendel-rose" : "bg-vendel-charcoal/15"
                                 }`}
                               />
                             )}
@@ -250,18 +250,18 @@ const OrderStatus = () => {
                             <div
                               className={`absolute left-[-26px] top-1 w-3 h-3 rounded-full border-2 ${
                                 isCompleted
-                                  ? "bg-vendel-gold border-vendel-gold"
-                                  : "bg-vendel-cream border-vendel-brown/30"
+                                  ? "bg-vendel-rose border-vendel-rose"
+                                  : "bg-vendel-cream border-vendel-charcoal/30"
                               }`}
                             />
                             <div>
-                              <p className={`font-medium ${isCompleted ? "text-vendel-brown" : "text-vendel-brown/40"}`}>
+                              <p className={`font-medium ${isCompleted ? "text-vendel-charcoal" : "text-vendel-charcoal/40"}`}>
                                 {step.label}
                                 {isCurrent && (
-                                  <span className="ml-2 text-xs font-normal text-vendel-gold">← Current</span>
+                                  <span className="ml-2 text-xs font-normal text-vendel-rose">← Current</span>
                                 )}
                               </p>
-                              <p className={`text-sm ${isCompleted ? "text-vendel-brown/60" : "text-vendel-brown/30"}`}>
+                              <p className={`text-sm ${isCompleted ? "text-vendel-charcoal/60" : "text-vendel-charcoal/30"}`}>
                                 {step.description}
                               </p>
                             </div>
@@ -285,48 +285,48 @@ const OrderStatus = () => {
             </Card>
 
             {/* Order details */}
-            <Card className="border-vendel-brown/20">
+            <Card className="border-vendel-charcoal/20">
               <CardHeader>
-                <CardTitle className="font-playfair text-vendel-brown text-lg">Order Details</CardTitle>
+                <CardTitle className="font-heading text-vendel-charcoal text-lg">Order Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-y-2 text-sm">
-                  <span className="text-vendel-brown/60">Placed</span>
-                  <span className="text-vendel-brown">{new Date(order.created_at).toLocaleDateString()}</span>
+                  <span className="text-vendel-charcoal/60">Placed</span>
+                  <span className="text-vendel-charcoal">{new Date(order.created_at).toLocaleDateString()}</span>
                   {order.requested_delivery_date && (
                     <>
-                      <span className="text-vendel-brown/60">Delivery Date</span>
-                      <span className="text-vendel-brown">{new Date(order.requested_delivery_date).toLocaleDateString()}</span>
+                      <span className="text-vendel-charcoal/60">Delivery Date</span>
+                      <span className="text-vendel-charcoal">{new Date(order.requested_delivery_date).toLocaleDateString()}</span>
                     </>
                   )}
-                  <span className="text-vendel-brown/60">Payment</span>
-                  <span className="text-vendel-brown capitalize">{order.payment_method ?? "—"}</span>
+                  <span className="text-vendel-charcoal/60">Payment</span>
+                  <span className="text-vendel-charcoal capitalize">{order.payment_method ?? "—"}</span>
                   {order.delivery_address && (
                     <>
-                      <span className="text-vendel-brown/60">Address</span>
-                      <span className="text-vendel-brown">{order.delivery_address}</span>
+                      <span className="text-vendel-charcoal/60">Address</span>
+                      <span className="text-vendel-charcoal">{order.delivery_address}</span>
                     </>
                   )}
                 </div>
 
-                <hr className="border-vendel-brown/10" />
+                <hr className="border-vendel-charcoal/10" />
 
                 {/* Items */}
                 <div className="space-y-3">
                   {order.order_items.map((item) => (
                     <div key={item.id} className="flex justify-between items-center">
                       <div>
-                        <p className="text-vendel-brown font-medium">{item.products?.name ?? "Product"}</p>
-                        <p className="text-xs text-vendel-brown/60">Qty: {item.quantity}</p>
+                        <p className="text-vendel-charcoal font-medium">{item.products?.name ?? "Product"}</p>
+                        <p className="text-xs text-vendel-charcoal/60">Qty: {item.quantity}</p>
                       </div>
-                      <p className="text-vendel-brown font-semibold">Rs. {(item.unit_price * item.quantity).toLocaleString()}</p>
+                      <p className="text-vendel-charcoal font-semibold">Rs. {(item.unit_price * item.quantity).toLocaleString()}</p>
                     </div>
                   ))}
                 </div>
 
-                <hr className="border-vendel-brown/10" />
+                <hr className="border-vendel-charcoal/10" />
 
-                <div className="flex justify-between font-bold text-vendel-brown">
+                <div className="flex justify-between font-bold text-vendel-charcoal">
                   <span>Total</span>
                   <span>Rs. {Number(order.total_amount).toLocaleString()}</span>
                 </div>

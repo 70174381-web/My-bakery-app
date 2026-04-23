@@ -37,7 +37,7 @@ const Shop = () => {
         <div className="container mx-auto max-w-6xl">
           {/* Header */}
           <div className="text-center mb-10">
-            <p className="font-cursive text-vendel-gold text-2xl mb-2">Fresh from the oven</p>
+            <p className="font-cursive text-vendel-rose text-2xl mb-2">Fresh from the oven</p>
             <h1 className="font-heading text-4xl md:text-5xl text-foreground">Our Menu</h1>
             <p className="text-muted-foreground mt-3 max-w-lg mx-auto">
               Handcrafted with love — cakes need 3 days notice, cookies &amp; treats are often same-day!
