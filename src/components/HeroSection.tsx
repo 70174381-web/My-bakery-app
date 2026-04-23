@@ -37,7 +37,7 @@ const HeroSection = () => (
           </Button>
         </Link>
         <a href="#story">
-          <Button variant="outline" size="lg" className="border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10 font-body px-8 py-6 text-lg rounded-full">
+          <Button variant="outline" size="lg" className="border-white/60 text-white bg-vendel-charcoal-dark/30 hover:bg-vendel-charcoal-dark/50 font-body px-8 py-6 text-lg rounded-full backdrop-blur-sm">
             Our Story
           </Button>
         </a>
