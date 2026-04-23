@@ -143,13 +143,27 @@ const OrderStatus = () => {
             </Card>
 
             {canCancel && (
-              <Button
-                variant="destructive"
-                className="w-full"
-                onClick={handleCancel}
-              >
-                <XCircle className="mr-2 h-4 w-4" /> Cancel Order
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full">
+                    <XCircle className="mr-2 h-4 w-4" /> Cancel Order
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancel this order?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. Your order will be cancelled and you won't be able to restore it.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Order</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleCancel} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Yes, Cancel Order
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
 
             {/* Estimated delivery timeline */}
