@@ -371,6 +371,13 @@ const AdminDashboard = () => {
           </div>
         )}
       </main>
+
+      <VariantManager
+        productId={variantTarget?.id ?? null}
+        productName={variantTarget?.name ?? ""}
+        open={!!variantTarget}
+        onOpenChange={(o) => !o && setVariantTarget(null)}
+      />
     </div>
   );
 };
