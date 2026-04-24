@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { LogOut, Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { LogOut, Plus, Pencil, Trash2, Loader2, Layers } from "lucide-react";
+import VariantManager from "@/components/admin/VariantManager";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,6 +70,7 @@ const AdminDashboard = () => {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [variantTarget, setVariantTarget] = useState<{ id: string; name: string } | null>(null);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["admin-products"],
@@ -327,6 +329,13 @@ const AdminDashboard = () => {
                       {p.daily_capacity != null && ` · ${p.daily_capacity}/day`}
                     </p>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setVariantTarget({ id: p.id, name: p.name })}
+                  >
+                    <Layers className="w-4 h-4 mr-1.5" /> Variants
+                  </Button>
                   <Button variant="outline" size="icon" onClick={() => openEdit(p)}>
                     <Pencil className="w-4 h-4" />
                   </Button>
@@ -362,6 +371,13 @@ const AdminDashboard = () => {
           </div>
         )}
       </main>
+
+      <VariantManager
+        productId={variantTarget?.id ?? null}
+        productName={variantTarget?.name ?? ""}
+        open={!!variantTarget}
+        onOpenChange={(o) => !o && setVariantTarget(null)}
+      />
     </div>
   );
 };
