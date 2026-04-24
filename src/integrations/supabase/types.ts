@@ -104,6 +104,45 @@ export type Database = {
         }
         Relationships: []
       }
+      product_variant_links: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          sort_order: number
+          variant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          sort_order?: number
+          variant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          sort_order?: number
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variant_links_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variant_links_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_variants: {
         Row: {
           created_at: string
@@ -113,8 +152,6 @@ export type Database = {
           in_stock: boolean
           name: string
           price: number
-          product_id: string
-          sort_order: number
           updated_at: string
         }
         Insert: {
@@ -125,8 +162,6 @@ export type Database = {
           in_stock?: boolean
           name: string
           price: number
-          product_id: string
-          sort_order?: number
           updated_at?: string
         }
         Update: {
@@ -137,19 +172,9 @@ export type Database = {
           in_stock?: boolean
           name?: string
           price?: number
-          product_id?: string
-          sort_order?: number
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "product_variants_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       products: {
         Row: {
