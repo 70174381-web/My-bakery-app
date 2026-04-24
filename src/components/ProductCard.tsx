@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useCart } from "@/hooks/useCart";
 import { ShoppingCart, Clock, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 interface ProductCardProps {
   id: string;
