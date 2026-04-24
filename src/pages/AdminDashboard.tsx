@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { LogOut, Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { LogOut, Plus, Pencil, Trash2, Loader2, Layers } from "lucide-react";
+import VariantManager from "@/components/admin/VariantManager";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
