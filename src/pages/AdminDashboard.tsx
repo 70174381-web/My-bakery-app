@@ -329,6 +329,13 @@ const AdminDashboard = () => {
                       {p.daily_capacity != null && ` · ${p.daily_capacity}/day`}
                     </p>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setVariantTarget({ id: p.id, name: p.name })}
+                  >
+                    <Layers className="w-4 h-4 mr-1.5" /> Variants
+                  </Button>
                   <Button variant="outline" size="icon" onClick={() => openEdit(p)}>
                     <Pencil className="w-4 h-4" />
                   </Button>
