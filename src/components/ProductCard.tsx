@@ -45,46 +45,48 @@ const ProductCard = ({
 
   return (
     <Card className="overflow-hidden border-border/50 hover:shadow-lg transition-shadow group">
-      <div className="relative aspect-square bg-muted overflow-hidden">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
-            No image
-          </div>
-        )}
+      <Link to={`/product/${id}`} className="block">
+        <div className="relative aspect-square bg-muted overflow-hidden">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+              No image
+            </div>
+          )}
 
-        {/* Badges */}
-        <div className="absolute top-2 left-2 flex flex-col gap-1">
-          <Badge variant="secondary" className="text-xs capitalize bg-card/90 backdrop-blur-sm">
-            {category}
-          </Badge>
-          {!inStock && (
-            <Badge variant="destructive" className="text-xs">
-              <AlertTriangle className="w-3 h-3 mr-1" /> Unavailable
+          {/* Badges */}
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            <Badge variant="secondary" className="text-xs capitalize bg-card/90 backdrop-blur-sm">
+              {category}
+            </Badge>
+            {!inStock && (
+              <Badge variant="destructive" className="text-xs">
+                <AlertTriangle className="w-3 h-3 mr-1" /> Unavailable
+              </Badge>
+            )}
+          </div>
+
+          {dailyCapacity && inStock && (
+            <Badge className="absolute top-2 right-2 text-xs bg-accent text-accent-foreground">
+              Limited
             </Badge>
           )}
         </div>
-
-        {dailyCapacity && inStock && (
-          <Badge className="absolute top-2 right-2 text-xs bg-accent text-accent-foreground">
-            Limited
-          </Badge>
-        )}
-      </div>
+      </Link>
 
       <CardContent className="p-4 space-y-3">
-        <div>
+        <Link to={`/product/${id}`} className="block hover:text-accent transition-colors">
           <h3 className="font-heading text-lg text-foreground leading-tight">{name}</h3>
           {description && (
             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{description}</p>
           )}
-        </div>
+        </Link>
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Clock className="w-3.5 h-3.5" />
