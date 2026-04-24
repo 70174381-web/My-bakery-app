@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,21 +19,29 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Plus, Trash2, Save } from "lucide-react";
+import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, Link2, Search } from "lucide-react";
 
-interface VariantRow {
-  id?: string;
-  _isNew?: boolean;
+interface Variant {
+  id: string;
   name: string;
-  price: string;
-  image_url: string;
+  price: number;
+  image_url: string | null;
   in_stock: boolean;
-  daily_capacity: string;
+  daily_capacity: number | null;
+}
+
+interface AttachedVariant extends Variant {
+  link_id: string;
   sort_order: number;
 }
 
@@ -44,114 +52,179 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-const toRow = (v: any): VariantRow => ({
-  id: v.id,
-  name: v.name,
-  price: String(v.price),
-  image_url: v.image_url ?? "",
-  in_stock: v.in_stock,
-  daily_capacity: v.daily_capacity != null ? String(v.daily_capacity) : "",
-  sort_order: v.sort_order ?? 0,
-});
-
 const VariantManager = ({ productId, productName, open, onOpenChange }: Props) => {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [rows, setRows] = useState<VariantRow[]>([]);
-  const [savingId, setSavingId] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const { isLoading } = useQuery({
-    queryKey: ["product-variants", productId],
-    queryFn: async () => {
+  // New-variant form
+  const [newName, setNewName] = useState("");
+  const [newPrice, setNewPrice] = useState("");
+  const [newCapacity, setNewCapacity] = useState("");
+  const [newImage, setNewImage] = useState("");
+
+  // Attached variants for this product
+  const { data: attached, isLoading } = useQuery({
+    queryKey: ["attached-variants", productId],
+    queryFn: async (): Promise<AttachedVariant[]> => {
       if (!productId) return [];
       const { data, error } = await supabase
-        .from("product_variants")
-        .select("*")
+        .from("product_variant_links")
+        .select("id, sort_order, variant:product_variants(*)")
         .eq("product_id", productId)
-        .order("sort_order")
-        .order("created_at");
+        .order("sort_order");
       if (error) throw error;
-      setRows(data.map(toRow));
-      return data;
+      return (data ?? [])
+        .filter((r: any) => r.variant)
+        .map((r: any) => ({
+          ...r.variant,
+          link_id: r.id,
+          sort_order: r.sort_order,
+        }));
     },
     enabled: !!productId && open,
   });
 
-  const updateRow = (idx: number, patch: Partial<VariantRow>) => {
-    setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
+  // All variants in the shared library
+  const { data: library } = useQuery({
+    queryKey: ["variant-library"],
+    queryFn: async (): Promise<Variant[]> => {
+      const { data, error } = await supabase
+        .from("product_variants")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open,
+  });
+
+  const attachedIds = useMemo(
+    () => new Set((attached ?? []).map((a) => a.id)),
+    [attached]
+  );
+
+  const available = useMemo(
+    () =>
+      (library ?? [])
+        .filter((v) => !attachedIds.has(v.id))
+        .filter((v) => v.name.toLowerCase().includes(search.toLowerCase())),
+    [library, attachedIds, search]
+  );
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["attached-variants", productId] });
+    qc.invalidateQueries({ queryKey: ["variant-library"] });
   };
 
-  const addBlank = () => {
-    setRows((prev) => [
-      ...prev,
-      {
-        _isNew: true,
-        name: "",
-        price: "",
-        image_url: "",
-        in_stock: true,
-        daily_capacity: "",
-        sort_order: prev.length,
-      },
-    ]);
-  };
-
-  const saveRow = async (idx: number) => {
-    const r = rows[idx];
-    if (!r.name.trim() || !r.price) {
-      toast({ title: "Name and price are required", variant: "destructive" });
+  const attachVariant = async (variantId: string) => {
+    if (!productId) return;
+    setBusy(true);
+    const nextOrder = (attached?.length ?? 0);
+    const { error } = await supabase.from("product_variant_links").insert({
+      product_id: productId,
+      variant_id: variantId,
+      sort_order: nextOrder,
+    });
+    setBusy(false);
+    if (error) {
+      toast({ title: "Attach failed", description: error.message, variant: "destructive" });
       return;
     }
-    setSavingId(r.id ?? `new-${idx}`);
+    toast({ title: "Variant attached" });
+    setPickerOpen(false);
+    setSearch("");
+    refresh();
+  };
 
-    const payload = {
+  const detachVariant = async (linkId: string) => {
+    const { error } = await supabase
+      .from("product_variant_links")
+      .delete()
+      .eq("id", linkId);
+    if (error) {
+      toast({ title: "Remove failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Variant removed", description: "It's still in the shared library." });
+    refresh();
+  };
+
+  const move = async (idx: number, dir: -1 | 1) => {
+    if (!attached) return;
+    const target = idx + dir;
+    if (target < 0 || target >= attached.length) return;
+    const a = attached[idx];
+    const b = attached[target];
+
+    setBusy(true);
+    const { error: e1 } = await supabase
+      .from("product_variant_links")
+      .update({ sort_order: b.sort_order })
+      .eq("id", a.link_id);
+    const { error: e2 } = await supabase
+      .from("product_variant_links")
+      .update({ sort_order: a.sort_order })
+      .eq("id", b.link_id);
+    setBusy(false);
+
+    if (e1 || e2) {
+      toast({ title: "Reorder failed", variant: "destructive" });
+      return;
+    }
+    refresh();
+  };
+
+  const createAndAttach = async () => {
+    if (!newName.trim() || !newPrice) {
+      toast({ title: "Name and price required", variant: "destructive" });
+      return;
+    }
+    setBusy(true);
+    const { data, error } = await supabase
+      .from("product_variants")
+      .insert({
+        name: newName.trim(),
+        price: Number(newPrice),
+        image_url: newImage || null,
+        daily_capacity: newCapacity ? Number(newCapacity) : null,
+      })
+      .select()
+      .single();
+
+    if (error || !data) {
+      setBusy(false);
+      toast({ title: "Create failed", description: error?.message, variant: "destructive" });
+      return;
+    }
+
+    const { error: linkErr } = await supabase.from("product_variant_links").insert({
       product_id: productId!,
-      name: r.name.trim(),
-      price: Number(r.price),
-      image_url: r.image_url || null,
-      in_stock: r.in_stock,
-      daily_capacity: r.daily_capacity ? Number(r.daily_capacity) : null,
-      sort_order: r.sort_order,
-    };
+      variant_id: data.id,
+      sort_order: attached?.length ?? 0,
+    });
+    setBusy(false);
 
-    const { data, error } = r.id
-      ? await supabase
-          .from("product_variants")
-          .update(payload)
-          .eq("id", r.id)
-          .select()
-          .single()
-      : await supabase.from("product_variants").insert(payload).select().single();
-
-    setSavingId(null);
-    if (error) {
-      toast({ title: "Save failed", description: error.message, variant: "destructive" });
+    if (linkErr) {
+      toast({ title: "Attach failed", description: linkErr.message, variant: "destructive" });
       return;
     }
-    setRows((prev) => prev.map((row, i) => (i === idx ? toRow(data) : row)));
-    toast({ title: r.id ? "Variant updated" : "Variant added" });
-    qc.invalidateQueries({ queryKey: ["product-variants", productId] });
-  };
 
-  const deleteRow = async (idx: number) => {
-    const r = rows[idx];
-    if (!r.id) {
-      setRows((prev) => prev.filter((_, i) => i !== idx));
-      return;
-    }
-    const { error } = await supabase.from("product_variants").delete().eq("id", r.id);
-    if (error) {
-      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
-      return;
-    }
-    setRows((prev) => prev.filter((_, i) => i !== idx));
-    toast({ title: "Variant deleted" });
-    qc.invalidateQueries({ queryKey: ["product-variants", productId] });
+    toast({ title: "Variant created & attached" });
+    setNewName("");
+    setNewPrice("");
+    setNewCapacity("");
+    setNewImage("");
+    setCreateOpen(false);
+    refresh();
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Variants — {productName}</DialogTitle>
         </DialogHeader>
@@ -161,31 +234,163 @@ const VariantManager = ({ productId, productName, open, onOpenChange }: Props) =
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="space-y-3">
-            {rows.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-6">
-                No variants yet. Add sizes or flavors below.
-              </p>
-            )}
+          <div className="space-y-4">
+            {/* Attached list */}
+            <div className="space-y-2">
+              {(!attached || attached.length === 0) && (
+                <p className="text-sm text-muted-foreground text-center py-6 border border-dashed border-border rounded-lg">
+                  No variants attached. Use the buttons below to add some.
+                </p>
+              )}
 
-            {rows.map((r, idx) => (
-              <Card key={r.id ?? `new-${idx}`} className="border-border/50">
-                <CardContent className="p-4 space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <Label>Variant name *</Label>
+              {attached?.map((v, idx) => (
+                <Card key={v.link_id} className="border-border/50">
+                  <CardContent className="p-3 flex items-center gap-3">
+                    <div className="flex flex-col gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        disabled={idx === 0 || busy}
+                        onClick={() => move(idx, -1)}
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        disabled={idx === attached.length - 1 || busy}
+                        onClick={() => move(idx, 1)}
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+
+                    <div className="w-12 h-12 rounded-md bg-muted overflow-hidden shrink-0">
+                      {v.image_url && (
+                        <img src={v.image_url} alt={v.name} className="w-full h-full object-cover" />
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium truncate">{v.name}</p>
+                        {!v.in_stock && (
+                          <span className="text-xs text-destructive">Inactive</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Rs. {Number(v.price).toLocaleString()}
+                        {v.daily_capacity != null && ` · ${v.daily_capacity}/day`}
+                      </p>
+                    </div>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Remove "{v.name}"?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This only detaches it from {productName}. The variant stays in
+                            your shared library.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => detachVariant(v.link_id)}>
+                            Remove
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Action row */}
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+              <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="flex-1 min-w-[180px]">
+                    <Link2 className="w-4 h-4 mr-2" /> Attach existing
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="start">
+                  <div className="p-2 border-b border-border">
+                    <div className="relative">
+                      <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
                       <Input
-                        placeholder="e.g. 1lb, Chocolate"
-                        value={r.name}
-                        onChange={(e) => updateRow(idx, { name: e.target.value })}
+                        placeholder="Search variants..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-8 h-9"
+                      />
+                    </div>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {available.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-6 px-3">
+                        {library?.length === 0
+                          ? "Library is empty. Create a new variant first."
+                          : "No matching variants available."}
+                      </p>
+                    ) : (
+                      available.map((v) => (
+                        <button
+                          key={v.id}
+                          disabled={busy}
+                          onClick={() => attachVariant(v.id)}
+                          className="w-full text-left px-3 py-2 hover:bg-muted transition-colors flex items-center justify-between gap-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{v.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Rs. {Number(v.price).toLocaleString()}
+                            </p>
+                          </div>
+                          <Plus className="w-4 h-4 text-muted-foreground shrink-0" />
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <Button
+                variant="default"
+                className="flex-1 min-w-[180px]"
+                onClick={() => setCreateOpen((o) => !o)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                {createOpen ? "Cancel new variant" : "Create new variant"}
+              </Button>
+            </div>
+
+            {/* Inline create form */}
+            {createOpen && (
+              <Card className="border-border/50 bg-muted/30">
+                <CardContent className="p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Name *</Label>
+                      <Input
+                        placeholder="e.g. 1lb"
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
                       />
                     </div>
                     <div>
                       <Label>Price (Rs.) *</Label>
                       <Input
                         type="number"
-                        value={r.price}
-                        onChange={(e) => updateRow(idx, { price: e.target.value })}
+                        value={newPrice}
+                        onChange={(e) => setNewPrice(e.target.value)}
                       />
                     </div>
                     <div>
@@ -194,78 +399,30 @@ const VariantManager = ({ productId, productName, open, onOpenChange }: Props) =
                         type="number"
                         min="0"
                         placeholder="Unlimited"
-                        value={r.daily_capacity}
-                        onChange={(e) =>
-                          updateRow(idx, { daily_capacity: e.target.value })
-                        }
+                        value={newCapacity}
+                        onChange={(e) => setNewCapacity(e.target.value)}
                       />
                     </div>
                     <div>
                       <Label>Image URL</Label>
                       <Input
                         placeholder="https://..."
-                        value={r.image_url}
-                        onChange={(e) => updateRow(idx, { image_url: e.target.value })}
+                        value={newImage}
+                        onChange={(e) => setNewImage(e.target.value)}
                       />
                     </div>
                   </div>
-
-                  <div className="flex items-center justify-between gap-3 pt-2">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id={`stock-${idx}`}
-                        checked={r.in_stock}
-                        onCheckedChange={(v) => updateRow(idx, { in_stock: v })}
-                      />
-                      <Label htmlFor={`stock-${idx}`} className="text-sm">
-                        {r.in_stock ? "Active" : "Deactivated"}
-                      </Label>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete variant?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              "{r.name || "Untitled"}" will be permanently removed.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => deleteRow(idx)}>
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-
-                      <Button
-                        size="sm"
-                        onClick={() => saveRow(idx)}
-                        disabled={savingId === (r.id ?? `new-${idx}`)}
-                      >
-                        {savingId === (r.id ?? `new-${idx}`) ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <Save className="w-4 h-4 mr-2" />
-                        )}
-                        Save
-                      </Button>
-                    </div>
-                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={createAndAttach}
+                    disabled={busy}
+                  >
+                    {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    Create & attach
+                  </Button>
                 </CardContent>
               </Card>
-            ))}
-
-            <Button variant="outline" className="w-full" onClick={addBlank}>
-              <Plus className="w-4 h-4 mr-2" /> Add variant
-            </Button>
+            )}
           </div>
         )}
       </DialogContent>
