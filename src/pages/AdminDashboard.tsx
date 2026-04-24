@@ -70,6 +70,7 @@ const AdminDashboard = () => {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [variantTarget, setVariantTarget] = useState<{ id: string; name: string } | null>(null);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["admin-products"],
