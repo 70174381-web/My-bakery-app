@@ -567,6 +567,22 @@ const Checkout = () => {
                       <span>Bykea shipping{bykeaDistanceKm > 0 ? ` · ${bykeaDistanceKm.toFixed(1)} km` : ""}</span>
                       <span>{shippingEstimate > 0 ? `Rs. ${shippingEstimate.toLocaleString()}` : "Enter address"}</span>
                     </div>
+                    {shippingEstimate > 0 && (
+                      <div className="rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground space-y-1">
+                        <div className="flex justify-between">
+                          <span>Base pickup fee</span>
+                          <span>Rs. {shippingBreakdown.baseFee.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Distance fee ({bykeaDistanceKm.toFixed(1)} km × Rs. {BYKEA_PER_KM})</span>
+                          <span>Rs. {shippingBreakdown.distanceFee.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Per-item surcharge ({Math.max(0, totalItems - 1)} × Rs. {BYKEA_PER_EXTRA_ITEM})</span>
+                          <span>Rs. {shippingBreakdown.itemSurcharge.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <Separator />
