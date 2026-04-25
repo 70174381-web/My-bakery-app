@@ -299,6 +299,18 @@ const VariantManager = ({ productId, productName, open, onOpenChange }: Props) =
               {attached?.map((v, idx) => (
                 <Card key={v.link_id} className="border-border/50">
                   <CardContent className="p-3 flex items-center gap-3">
+                    {(() => {
+                      const draft = editing[v.id] ?? {
+                        name: v.name,
+                        price: String(v.price),
+                        daily_capacity: v.daily_capacity != null ? String(v.daily_capacity) : "",
+                        in_stock: v.in_stock,
+                      };
+                      const validation = variantSchema.safeParse(draft);
+                      const errors = validation.success ? {} : validation.error.flatten().fieldErrors;
+                      const changed = !!editing[v.id];
+                      return null;
+                    })()}
                     <div className="flex flex-col gap-0.5">
                       <Button
                         variant="ghost"
