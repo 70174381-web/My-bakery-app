@@ -410,6 +410,12 @@ const Checkout = () => {
                           onChange={(e) => setAddress(e.target.value)}
                           maxLength={500}
                         />
+                        {address.trim().length >= 5 && (
+                          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <MapPin className="h-3.5 w-3.5 text-vendel-rose" />
+                            Bykea distance estimate: {bykeaDistanceKm.toFixed(1)} km
+                          </p>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -528,8 +534,8 @@ const Checkout = () => {
                       <span>Rs. {totalPrice.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-foreground">
-                      <span>Shipping (estimate)</span>
-                      <span>Rs. {shippingEstimate.toLocaleString()}</span>
+                      <span>Bykea shipping{bykeaDistanceKm > 0 ? ` · ${bykeaDistanceKm.toFixed(1)} km` : ""}</span>
+                      <span>{shippingEstimate > 0 ? `Rs. ${shippingEstimate.toLocaleString()}` : "Enter address"}</span>
                     </div>
                   </div>
 
