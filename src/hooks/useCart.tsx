@@ -7,11 +7,12 @@ export interface CartItem {
   imageUrl: string | null;
   quantity: number;
   leadTimeDays: number;
+  availableStock?: number | null;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, "quantity">) => void;
+  addItem: (item: Omit<CartItem, "quantity">) => boolean;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -26,15 +27,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
 
   const addItem = useCallback((item: Omit<CartItem, "quantity">) => {
+    let added = false;
     setItems((prev) => {
       const existing = prev.find((i) => i.productId === item.productId);
+      const maxStock = item.availableStock ?? existing?.availableStock ?? Infinity;
       if (existing) {
+        if (existing.quantity >= maxStock) return prev;
+        added = true;
         return prev.map((i) =>
-          i.productId === item.productId ? { ...i, quantity: i.quantity + 1 } : i
+          i.productId === item.productId ? { ...i, ...item, quantity: Math.min(maxStock, i.quantity + 1) } : i
         );
       }
+      if (maxStock <= 0) return prev;
+      added = true;
       return [...prev, { ...item, quantity: 1 }];
     });
+    return added;
   }, []);
 
   const removeItem = useCallback((productId: string) => {
@@ -46,7 +54,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       setItems((prev) => prev.filter((i) => i.productId !== productId));
     } else {
       setItems((prev) =>
-        prev.map((i) => (i.productId === productId ? { ...i, quantity } : i))
+        prev.map((i) =>
+          i.productId === productId
+            ? { ...i, quantity: Math.min(quantity, i.availableStock ?? Infinity) }
+            : i
+        )
       );
     }
   }, []);
