@@ -23,16 +23,22 @@ const ProductCard = ({
 }: ProductCardProps) => {
   const { addItem } = useCart();
   const { toast } = useToast();
+  const maxStock = dailyCapacity ?? null;
 
   const handleAdd = () => {
-    addItem({
+    const added = addItem({
       productId: id,
       name,
       price,
       imageUrl,
       leadTimeDays,
+      availableStock: maxStock,
     });
-    toast({ title: "Added to cart", description: `${name} added!` });
+    toast(
+      added
+        ? { title: "Added to cart", description: `${name} added!` }
+        : { title: "Stock limit reached", description: `Only ${maxStock ?? 0} available for this item.`, variant: "destructive" }
+    );
   };
 
   const earliestDate = new Date();
