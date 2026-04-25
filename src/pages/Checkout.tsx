@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useCart } from "@/hooks/useCart";
@@ -51,8 +51,8 @@ const estimateBykeaDistanceKm = (address: string) => {
   return Number((addressFactor + coordinateSeed).toFixed(1));
 };
 
-const calculateBykeaShipping = (distanceKm: number, hasItems: boolean) =>
-  hasItems && distanceKm > 0 ? Math.ceil(BYKEA_BASE_FEE + distanceKm * BYKEA_PER_KM) : 0;
+const calculateBykeaShipping = (distanceKm: number, itemCount: number) =>
+  itemCount > 0 && distanceKm > 0 ? Math.ceil(BYKEA_BASE_FEE + distanceKm * BYKEA_PER_KM + Math.max(0, itemCount - 1) * 25) : 0;
 
 type Step = "cart" | "payment" | "success";
 type PaymentMethod = "card" | "easypaisa" | "bank_transfer";
@@ -76,8 +76,8 @@ const Checkout = () => {
   // Payment
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("easypaisa");
 
-  const bykeaDistanceKm = estimateBykeaDistanceKm(address);
-  const shippingEstimate = calculateBykeaShipping(bykeaDistanceKm, totalItems > 0);
+  const bykeaDistanceKm = useMemo(() => estimateBykeaDistanceKm(address), [address]);
+  const shippingEstimate = useMemo(() => calculateBykeaShipping(bykeaDistanceKm, totalItems), [bykeaDistanceKm, totalItems]);
   const grandTotal = totalPrice + shippingEstimate;
 
   const earliestDate = new Date();
@@ -330,9 +330,15 @@ const Checkout = () => {
                               size="icon"
                               className="h-8 w-8"
                               onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                              disabled={item.availableStock != null && item.quantity >= item.availableStock}
                             >
                               <Plus className="w-3 h-3" />
                             </Button>
+                            {item.availableStock != null && (
+                              <span className="text-xs text-muted-foreground">
+                                Max {item.availableStock}
+                              </span>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"

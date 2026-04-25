@@ -34,18 +34,22 @@ const ProductDetail = () => {
 
   const handleAdd = () => {
     if (!product) return;
+    let addedCount = 0;
     for (let i = 0; i < quantity; i++) {
-      addItem({
+      const added = addItem({
         productId: product.id,
         name: product.name,
         price: product.price,
         imageUrl: product.image_url,
         leadTimeDays: product.lead_time_days,
+        availableStock: product.daily_capacity ?? null,
       });
+      if (added) addedCount += 1;
     }
     toast({
-      title: "Added to cart",
-      description: `${quantity} × ${product.name} added!`,
+      title: addedCount > 0 ? "Added to cart" : "Stock limit reached",
+      description: addedCount > 0 ? `${addedCount} × ${product.name} added!` : `Only ${maxQty} available for this item.`,
+      variant: addedCount > 0 ? "default" : "destructive",
     });
   };
 
