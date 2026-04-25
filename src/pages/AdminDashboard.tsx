@@ -37,6 +37,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
 
 const CATEGORIES = ["cakes", "cookies", "brownies", "treats", "other"];
 
@@ -63,6 +64,13 @@ const emptyForm: ProductForm = {
   daily_capacity: "",
 };
 
+const productSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120, "Name is too long"),
+  price: z.coerce.number().positive("Price must be greater than 0"),
+  lead_time_days: z.coerce.number().int().min(0, "Lead time cannot be negative").max(30, "Lead time is too long"),
+  daily_capacity: z.union([z.literal(""), z.coerce.number().int().min(0, "Quantity cannot be negative").max(999, "Quantity is too high")]),
+});
+
 const AdminDashboard = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
@@ -71,6 +79,9 @@ const AdminDashboard = () => {
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [variantTarget, setVariantTarget] = useState<{ id: string; name: string } | null>(null);
+
+  const formValidation = productSchema.safeParse(form);
+  const fieldErrors = formValidation.success ? {} : formValidation.error.flatten().fieldErrors;
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["admin-products"],
@@ -106,20 +117,21 @@ const AdminDashboard = () => {
   };
 
   const handleSave = async () => {
-    if (!form.name || !form.price) {
-      toast({ title: "Name and price are required", variant: "destructive" });
+    const parsed = productSchema.safeParse(form);
+    if (!parsed.success) {
+      toast({ title: "Fix product details first", description: parsed.error.issues[0]?.message, variant: "destructive" });
       return;
     }
     setSaving(true);
     const payload = {
       name: form.name,
       description: form.description || null,
-      price: Number(form.price),
+      price: parsed.data.price,
       category: form.category,
       image_url: form.image_url || null,
       in_stock: form.in_stock,
-      lead_time_days: Number(form.lead_time_days) || 0,
-      daily_capacity: form.daily_capacity ? Number(form.daily_capacity) : null,
+      lead_time_days: parsed.data.lead_time_days,
+      daily_capacity: parsed.data.daily_capacity === "" ? null : parsed.data.daily_capacity,
     };
 
     const { error } = form.id
@@ -187,7 +199,9 @@ const AdminDashboard = () => {
                     id="name"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    aria-invalid={!!fieldErrors.name}
                   />
+                  {fieldErrors.name?.[0] && <p className="mt-1 text-xs text-destructive">{fieldErrors.name[0]}</p>}
                 </div>
 
                 <div>
@@ -206,9 +220,12 @@ const AdminDashboard = () => {
                     <Input
                       id="price"
                       type="number"
+                      min="1"
                       value={form.price}
                       onChange={(e) => setForm({ ...form, price: e.target.value })}
+                      aria-invalid={!!fieldErrors.price}
                     />
+                    {fieldErrors.price?.[0] && <p className="mt-1 text-xs text-destructive">{fieldErrors.price[0]}</p>}
                   </div>
                   <div>
                     <Label htmlFor="cat">Category</Label>
@@ -241,7 +258,9 @@ const AdminDashboard = () => {
                       onChange={(e) =>
                         setForm({ ...form, lead_time_days: e.target.value })
                       }
+                      aria-invalid={!!fieldErrors.lead_time_days}
                     />
+                    {fieldErrors.lead_time_days?.[0] && <p className="mt-1 text-xs text-destructive">{fieldErrors.lead_time_days[0]}</p>}
                   </div>
                   <div>
                     <Label htmlFor="qty">Daily quantity</Label>
@@ -254,7 +273,9 @@ const AdminDashboard = () => {
                       onChange={(e) =>
                         setForm({ ...form, daily_capacity: e.target.value })
                       }
+                      aria-invalid={!!fieldErrors.daily_capacity}
                     />
+                    {fieldErrors.daily_capacity?.[0] && <p className="mt-1 text-xs text-destructive">{fieldErrors.daily_capacity[0]}</p>}
                   </div>
                 </div>
 
@@ -271,8 +292,8 @@ const AdminDashboard = () => {
                 <div className="flex items-center justify-between rounded-lg border border-border p-3">
                   <div>
                     <Label htmlFor="stock">In stock</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Toggle off to mark as sold out.
+                  <p className="text-xs text-muted-foreground">
+                      Toggle off to deactivate this product in the shop.
                     </p>
                   </div>
                   <Switch
@@ -287,7 +308,7 @@ const AdminDashboard = () => {
                 <Button variant="outline" onClick={() => setOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleSave} disabled={saving}>
+                <Button onClick={handleSave} disabled={saving || !formValidation.success}>
                   {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Save
                 </Button>

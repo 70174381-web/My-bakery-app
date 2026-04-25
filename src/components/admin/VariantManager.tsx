@@ -29,7 +29,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, Link2, Search } from "lucide-react";
+import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, Link2, Search, Save } from "lucide-react";
+import { z } from "zod";
 
 interface Variant {
   id: string;
@@ -52,6 +53,12 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+const variantSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(80, "Name is too long"),
+  price: z.coerce.number().positive("Price must be greater than 0"),
+  daily_capacity: z.union([z.literal(""), z.coerce.number().int().min(0, "Quantity cannot be negative").max(999, "Quantity is too high")]),
+});
+
 const VariantManager = ({ productId, productName, open, onOpenChange }: Props) => {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -59,6 +66,7 @@ const VariantManager = ({ productId, productName, open, onOpenChange }: Props) =
   const [createOpen, setCreateOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<Record<string, { name: string; price: string; daily_capacity: string; in_stock: boolean }>>({});
 
   // New-variant form
   const [newName, setNewName] = useState("");
@@ -120,6 +128,50 @@ const VariantManager = ({ productId, productName, open, onOpenChange }: Props) =
     qc.invalidateQueries({ queryKey: ["variant-library"] });
   };
 
+  const updateDraft = (v: AttachedVariant, changes: Partial<{ name: string; price: string; daily_capacity: string; in_stock: boolean }>) => {
+    const current = editing[v.id] ?? {
+      name: v.name,
+      price: String(v.price),
+      daily_capacity: v.daily_capacity != null ? String(v.daily_capacity) : "",
+      in_stock: v.in_stock,
+    };
+    setEditing((prev) => ({ ...prev, [v.id]: { ...current, ...changes } }));
+  };
+
+  const saveVariant = async (v: AttachedVariant) => {
+    const draft = editing[v.id];
+    if (!draft) return;
+    const parsed = variantSchema.safeParse(draft);
+    if (!parsed.success) {
+      toast({ title: "Fix variant details first", description: parsed.error.issues[0]?.message, variant: "destructive" });
+      return;
+    }
+
+    setBusy(true);
+    const { error } = await supabase
+      .from("product_variants")
+      .update({
+        name: parsed.data.name,
+        price: parsed.data.price,
+        daily_capacity: parsed.data.daily_capacity === "" ? null : parsed.data.daily_capacity,
+        in_stock: draft.in_stock,
+      })
+      .eq("id", v.id);
+    setBusy(false);
+
+    if (error) {
+      toast({ title: "Variant update failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    setEditing((prev) => {
+      const next = { ...prev };
+      delete next[v.id];
+      return next;
+    });
+    toast({ title: "Variant updated" });
+    refresh();
+  };
+
   const attachVariant = async (variantId: string) => {
     if (!productId) return;
     setBusy(true);
@@ -179,18 +231,19 @@ const VariantManager = ({ productId, productName, open, onOpenChange }: Props) =
   };
 
   const createAndAttach = async () => {
-    if (!newName.trim() || !newPrice) {
-      toast({ title: "Name and price required", variant: "destructive" });
+    const parsed = variantSchema.safeParse({ name: newName, price: newPrice, daily_capacity: newCapacity });
+    if (!parsed.success) {
+      toast({ title: "Fix variant details first", description: parsed.error.issues[0]?.message, variant: "destructive" });
       return;
     }
     setBusy(true);
     const { data, error } = await supabase
       .from("product_variants")
       .insert({
-        name: newName.trim(),
-        price: Number(newPrice),
+        name: parsed.data.name,
+        price: parsed.data.price,
         image_url: newImage || null,
-        daily_capacity: newCapacity ? Number(newCapacity) : null,
+        daily_capacity: parsed.data.daily_capacity === "" ? null : parsed.data.daily_capacity,
       })
       .select()
       .single();
@@ -243,7 +296,18 @@ const VariantManager = ({ productId, productName, open, onOpenChange }: Props) =
                 </p>
               )}
 
-              {attached?.map((v, idx) => (
+              {attached?.map((v, idx) => {
+                const draft = editing[v.id] ?? {
+                  name: v.name,
+                  price: String(v.price),
+                  daily_capacity: v.daily_capacity != null ? String(v.daily_capacity) : "",
+                  in_stock: v.in_stock,
+                };
+                const validation = variantSchema.safeParse(draft);
+                const errors = validation.success ? {} : validation.error.flatten().fieldErrors;
+                const changed = !!editing[v.id];
+
+                return (
                 <Card key={v.link_id} className="border-border/50">
                   <CardContent className="p-3 flex items-center gap-3">
                     <div className="flex flex-col gap-0.5">
@@ -273,18 +337,28 @@ const VariantManager = ({ productId, productName, open, onOpenChange }: Props) =
                       )}
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium truncate">{v.name}</p>
-                        {!v.in_stock && (
-                          <span className="text-xs text-destructive">Inactive</span>
-                        )}
+                    <div className="flex-1 min-w-0 grid gap-2 md:grid-cols-[1.4fr_0.8fr_0.8fr_auto] md:items-start">
+                      <div>
+                        <Input value={draft.name} onChange={(e) => updateDraft(v, { name: e.target.value })} aria-invalid={!!errors.name} />
+                        {errors.name?.[0] && <p className="mt-1 text-xs text-destructive">{errors.name[0]}</p>}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Rs. {Number(v.price).toLocaleString()}
-                        {v.daily_capacity != null && ` · ${v.daily_capacity}/day`}
-                      </p>
+                      <div>
+                        <Input type="number" min="1" value={draft.price} onChange={(e) => updateDraft(v, { price: e.target.value })} aria-invalid={!!errors.price} />
+                        {errors.price?.[0] && <p className="mt-1 text-xs text-destructive">{errors.price[0]}</p>}
+                      </div>
+                      <div>
+                        <Input type="number" min="0" placeholder="Qty" value={draft.daily_capacity} onChange={(e) => updateDraft(v, { daily_capacity: e.target.value })} aria-invalid={!!errors.daily_capacity} />
+                        {errors.daily_capacity?.[0] && <p className="mt-1 text-xs text-destructive">{errors.daily_capacity[0]}</p>}
+                      </div>
+                      <div className="flex items-center gap-2 rounded-md border border-border px-2 py-2">
+                        <Label className="text-xs">Active</Label>
+                        <Switch checked={draft.in_stock} onCheckedChange={(checked) => updateDraft(v, { in_stock: checked })} />
+                      </div>
                     </div>
+
+                    <Button variant="outline" size="icon" disabled={!changed || !validation.success || busy} onClick={() => saveVariant(v)}>
+                      <Save className="w-4 h-4" />
+                    </Button>
 
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -310,7 +384,8 @@ const VariantManager = ({ productId, productName, open, onOpenChange }: Props) =
                     </AlertDialog>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
 
             {/* Action row */}
