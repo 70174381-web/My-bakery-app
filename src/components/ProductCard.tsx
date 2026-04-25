@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCart } from "@/hooks/useCart";
-import { ShoppingCart, Clock, AlertTriangle } from "lucide-react";
+import { ShoppingCart, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
@@ -24,6 +24,7 @@ const ProductCard = ({
   const { addItem } = useCart();
   const { toast } = useToast();
   const maxStock = dailyCapacity ?? null;
+  const leadLabel = leadTimeDays === 0 ? "Same-day" : `${leadTimeDays}d lead`;
 
   const handleAdd = () => {
     const added = addItem({
@@ -71,18 +72,18 @@ const ProductCard = ({
             <Badge variant="secondary" className="text-xs capitalize bg-card/90 backdrop-blur-sm">
               {category}
             </Badge>
-            {!inStock && (
-              <Badge variant="destructive" className="text-xs">
-                <AlertTriangle className="w-3 h-3 mr-1" /> Unavailable
-              </Badge>
-            )}
+            <Badge
+              variant={inStock ? "secondary" : "destructive"}
+              className="text-xs gap-1 bg-card/90 backdrop-blur-sm"
+            >
+              {inStock ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+              {inStock ? "Available" : "Sold out"}
+            </Badge>
           </div>
 
-          {dailyCapacity && inStock && (
-            <Badge className="absolute top-2 right-2 text-xs bg-accent text-accent-foreground">
-              Limited
-            </Badge>
-          )}
+          <Badge className="absolute top-2 right-2 text-xs bg-accent text-accent-foreground">
+            {dailyCapacity && inStock ? `${dailyCapacity}/day` : leadLabel}
+          </Badge>
         </div>
       </Link>
 

@@ -24,12 +24,14 @@ import {
   Loader2,
   CheckCircle2,
   MapPin,
+  AlertTriangle,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 const BAKERY_LOCATION = { lat: 31.5204, lng: 74.3587 };
 const BYKEA_BASE_FEE = 160;
 const BYKEA_PER_KM = 45;
+const BYKEA_PER_EXTRA_ITEM = 25;
 
 const estimateBykeaDistanceKm = (address: string) => {
   const clean = address.trim().toLowerCase();
@@ -51,8 +53,12 @@ const estimateBykeaDistanceKm = (address: string) => {
   return Number((addressFactor + coordinateSeed).toFixed(1));
 };
 
-const calculateBykeaShipping = (distanceKm: number, itemCount: number) =>
-  itemCount > 0 && distanceKm > 0 ? Math.ceil(BYKEA_BASE_FEE + distanceKm * BYKEA_PER_KM + Math.max(0, itemCount - 1) * 25) : 0;
+const getBykeaBreakdown = (distanceKm: number, itemCount: number) => {
+  const baseFee = itemCount > 0 && distanceKm > 0 ? BYKEA_BASE_FEE : 0;
+  const distanceFee = itemCount > 0 && distanceKm > 0 ? Math.ceil(distanceKm * BYKEA_PER_KM) : 0;
+  const itemSurcharge = itemCount > 0 && distanceKm > 0 ? Math.max(0, itemCount - 1) * BYKEA_PER_EXTRA_ITEM : 0;
+  return { baseFee, distanceFee, itemSurcharge, total: baseFee + distanceFee + itemSurcharge };
+};
 
 type Step = "cart" | "payment" | "success";
 type PaymentMethod = "card" | "easypaisa" | "bank_transfer";
@@ -77,7 +83,8 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("easypaisa");
 
   const bykeaDistanceKm = useMemo(() => estimateBykeaDistanceKm(address), [address]);
-  const shippingEstimate = useMemo(() => calculateBykeaShipping(bykeaDistanceKm, totalItems), [bykeaDistanceKm, totalItems]);
+  const shippingBreakdown = useMemo(() => getBykeaBreakdown(bykeaDistanceKm, totalItems), [bykeaDistanceKm, totalItems]);
+  const shippingEstimate = shippingBreakdown.total;
   const grandTotal = totalPrice + shippingEstimate;
 
   const earliestDate = new Date();
@@ -310,6 +317,15 @@ const Checkout = () => {
                           <h3 className="font-heading text-lg text-foreground leading-tight truncate">
                             {item.name}
                           </h3>
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${item.availableStock === 0 ? "bg-destructive/10 text-destructive" : "bg-accent/10 text-accent"}`}>
+                              {item.availableStock === 0 ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                              {item.availableStock === 0 ? "Sold out" : "Available"}
+                            </span>
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                              {item.leadTimeDays === 0 ? "Same-day" : `${item.leadTimeDays}d lead`}
+                            </span>
+                          </div>
                           <p className="text-sm text-muted-foreground mt-0.5">
                             Rs. {item.price.toLocaleString()} each
                           </p>
@@ -521,9 +537,17 @@ const Checkout = () => {
                   {step === "payment" && (
                     <div className="space-y-2 text-sm">
                       {items.map((item) => (
-                        <div key={item.productId} className="flex justify-between text-foreground">
-                          <span className="truncate mr-2">
-                            {item.name} × {item.quantity}
+                        <div key={item.productId} className="flex justify-between gap-3 text-foreground">
+                          <span className="min-w-0 mr-2">
+                            <span className="block truncate">{item.name} × {item.quantity}</span>
+                            <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${item.availableStock === 0 ? "bg-destructive/10 text-destructive" : "bg-accent/10 text-accent"}`}>
+                                {item.availableStock === 0 ? "Sold out" : "Available"}
+                              </span>
+                              <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                                {item.leadTimeDays === 0 ? "Same-day" : `${item.leadTimeDays}d lead`}
+                              </span>
+                            </span>
                           </span>
                           <span className="flex-shrink-0">
                             Rs. {(item.price * item.quantity).toLocaleString()}
@@ -543,6 +567,22 @@ const Checkout = () => {
                       <span>Bykea shipping{bykeaDistanceKm > 0 ? ` · ${bykeaDistanceKm.toFixed(1)} km` : ""}</span>
                       <span>{shippingEstimate > 0 ? `Rs. ${shippingEstimate.toLocaleString()}` : "Enter address"}</span>
                     </div>
+                    {shippingEstimate > 0 && (
+                      <div className="rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground space-y-1">
+                        <div className="flex justify-between">
+                          <span>Base pickup fee</span>
+                          <span>Rs. {shippingBreakdown.baseFee.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Distance fee ({bykeaDistanceKm.toFixed(1)} km × Rs. {BYKEA_PER_KM})</span>
+                          <span>Rs. {shippingBreakdown.distanceFee.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Per-item surcharge ({Math.max(0, totalItems - 1)} × Rs. {BYKEA_PER_EXTRA_ITEM})</span>
+                          <span>Rs. {shippingBreakdown.itemSurcharge.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <Separator />
