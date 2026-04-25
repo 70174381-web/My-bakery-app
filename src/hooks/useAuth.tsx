@@ -8,6 +8,7 @@ interface AuthContextType {
   isAdmin: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUpAdmin: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -60,13 +61,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error: error as Error | null };
   };
 
+  const signUpAdmin = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/admin/login`,
+      },
+    });
+
+    if (error) return { error: error as Error | null };
+
+    const activeSession = data.session;
+    if (!activeSession?.user) {
+      return { error: null };
+    }
+
+    const { error: roleError } = await (supabase as any).rpc("claim_admin_role");
+    if (roleError) return { error: roleError as Error | null };
+
+    await checkAdmin(activeSession.user.id);
+    return { error: null };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setIsAdmin(false);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, isAdmin, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, user, isAdmin, loading, signIn, signUpAdmin, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,31 +1,36 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Lock } from "lucide-react";
+import { Lock, UserPlus } from "lucide-react";
 
-const AdminLogin = () => {
+const AdminLogin = ({ mode = "login" }: { mode?: "login" | "signup" }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, signUpAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isSignup = mode === "signup";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) return;
     setSubmitting(true);
-    const { error } = await signIn(email.trim(), password);
+    const { error } = isSignup ? await signUpAdmin(email.trim(), password) : await signIn(email.trim(), password);
     setSubmitting(false);
     if (error) {
-      toast({ title: "Login failed", description: error.message, variant: "destructive" });
+      toast({ title: isSignup ? "Signup failed" : "Login failed", description: error.message, variant: "destructive" });
     } else {
-      navigate("/admin");
+      toast({
+        title: isSignup ? "Admin signup started" : "Signed in",
+        description: isSignup ? "Check your email if verification is required, then sign in." : "Welcome back.",
+      });
+      navigate(isSignup ? "/admin/login" : "/admin");
     }
   };
 
@@ -34,10 +39,12 @@ const AdminLogin = () => {
       <Card className="w-full max-w-md border-border/50 shadow-xl">
         <CardHeader className="text-center space-y-2">
           <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <Lock className="w-6 h-6 text-primary" />
+              {isSignup ? <UserPlus className="w-6 h-6 text-primary" /> : <Lock className="w-6 h-6 text-primary" />}
           </div>
-          <CardTitle className="font-heading text-2xl">Admin Login</CardTitle>
-          <p className="text-sm text-muted-foreground">Vendel Bakes — kitchen access only</p>
+            <CardTitle className="font-heading text-2xl">{isSignup ? "Admin Signup" : "Admin Login"}</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {isSignup ? "Create the bakery admin account" : "Vendel Bakes — kitchen access only"}
+            </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -66,8 +73,14 @@ const AdminLogin = () => {
               />
             </div>
             <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? "Signing in…" : "Sign In"}
+              {submitting ? (isSignup ? "Creating account…" : "Signing in…") : isSignup ? "Create Admin Account" : "Sign In"}
             </Button>
+            <p className="text-center text-sm text-muted-foreground">
+              {isSignup ? "Already have admin access?" : "Need to set up admin access?"}{" "}
+              <Link className="font-medium text-primary hover:underline" to={isSignup ? "/admin/login" : "/admin/signup"}>
+                {isSignup ? "Sign in" : "Sign up"}
+              </Link>
+            </p>
           </form>
         </CardContent>
       </Card>
