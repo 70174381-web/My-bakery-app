@@ -30,7 +30,7 @@ const AdminLogin = ({ mode = "login" }: { mode?: "login" | "signup" }) => {
         title: isSignup ? "Admin signup started" : "Signed in",
         description: isSignup ? "Check your email if verification is required, then sign in." : "Welcome back.",
       });
-      navigate(isSignup ? "/admin/login" : "/admin");
+      navigate(isSignup ? "/admin/onboarding" : "/admin");
     }
   };
 
@@ -43,7 +43,7 @@ const AdminLogin = ({ mode = "login" }: { mode?: "login" | "signup" }) => {
           </div>
             <CardTitle className="font-heading text-2xl">{isSignup ? "Admin Signup" : "Admin Login"}</CardTitle>
             <p className="text-sm text-muted-foreground">
-              {isSignup ? "Create the bakery admin account" : "Vendel Bakes — kitchen access only"}
+              {isSignup ? "Create the first secure bakery admin account" : "Vendel Bakes — kitchen access only"}
             </p>
         </CardHeader>
         <CardContent>
@@ -69,12 +69,17 @@ const AdminLogin = ({ mode = "login" }: { mode?: "login" | "signup" }) => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                autoComplete="current-password"
+                autoComplete={isSignup ? "new-password" : "current-password"}
               />
             </div>
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? (isSignup ? "Creating account…" : "Signing in…") : isSignup ? "Create Admin Account" : "Sign In"}
             </Button>
+            {isSignup && (
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                The first verified account can claim admin access. Later admins must be granted access by an existing admin.
+              </p>
+            )}
             <p className="text-center text-sm text-muted-foreground">
               {isSignup ? "Already have admin access?" : "Need to set up admin access?"}{" "}
               <Link className="font-medium text-primary hover:underline" to={isSignup ? "/admin/login" : "/admin/signup"}>
