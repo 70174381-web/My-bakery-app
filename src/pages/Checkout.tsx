@@ -24,12 +24,14 @@ import {
   Loader2,
   CheckCircle2,
   MapPin,
+  AlertTriangle,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 const BAKERY_LOCATION = { lat: 31.5204, lng: 74.3587 };
 const BYKEA_BASE_FEE = 160;
 const BYKEA_PER_KM = 45;
+const BYKEA_PER_EXTRA_ITEM = 25;
 
 const estimateBykeaDistanceKm = (address: string) => {
   const clean = address.trim().toLowerCase();
@@ -51,8 +53,12 @@ const estimateBykeaDistanceKm = (address: string) => {
   return Number((addressFactor + coordinateSeed).toFixed(1));
 };
 
-const calculateBykeaShipping = (distanceKm: number, itemCount: number) =>
-  itemCount > 0 && distanceKm > 0 ? Math.ceil(BYKEA_BASE_FEE + distanceKm * BYKEA_PER_KM + Math.max(0, itemCount - 1) * 25) : 0;
+const getBykeaBreakdown = (distanceKm: number, itemCount: number) => {
+  const baseFee = itemCount > 0 && distanceKm > 0 ? BYKEA_BASE_FEE : 0;
+  const distanceFee = itemCount > 0 && distanceKm > 0 ? Math.ceil(distanceKm * BYKEA_PER_KM) : 0;
+  const itemSurcharge = itemCount > 0 && distanceKm > 0 ? Math.max(0, itemCount - 1) * BYKEA_PER_EXTRA_ITEM : 0;
+  return { baseFee, distanceFee, itemSurcharge, total: baseFee + distanceFee + itemSurcharge };
+};
 
 type Step = "cart" | "payment" | "success";
 type PaymentMethod = "card" | "easypaisa" | "bank_transfer";
@@ -77,7 +83,8 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("easypaisa");
 
   const bykeaDistanceKm = useMemo(() => estimateBykeaDistanceKm(address), [address]);
-  const shippingEstimate = useMemo(() => calculateBykeaShipping(bykeaDistanceKm, totalItems), [bykeaDistanceKm, totalItems]);
+  const shippingBreakdown = useMemo(() => getBykeaBreakdown(bykeaDistanceKm, totalItems), [bykeaDistanceKm, totalItems]);
+  const shippingEstimate = shippingBreakdown.total;
   const grandTotal = totalPrice + shippingEstimate;
 
   const earliestDate = new Date();
