@@ -330,9 +330,15 @@ const Checkout = () => {
                               size="icon"
                               className="h-8 w-8"
                               onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                              disabled={item.availableStock != null && item.quantity >= item.availableStock}
                             >
                               <Plus className="w-3 h-3" />
                             </Button>
+                            {item.availableStock != null && (
+                              <span className="text-xs text-muted-foreground">
+                                Max {item.availableStock}
+                              </span>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
