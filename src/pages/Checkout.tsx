@@ -64,7 +64,7 @@ type Step = "cart" | "payment" | "success";
 type PaymentMethod = "card" | "easypaisa" | "bank_transfer";
 
 const Checkout = () => {
-  const { items, updateQuantity, removeItem, totalPrice, totalItems, maxLeadTime, clearCart } =
+  const { items, updateQuantity, setQuantityFromInput, removeItem, totalPrice, totalItems, maxLeadTime, clearCart, getLineKey } =
     useCart();
   const { user } = useAuth();
   const { toast } = useToast();
