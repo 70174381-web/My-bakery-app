@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useCart } from "@/hooks/useCart";
+import { useCart, stockToast } from "@/hooks/useCart";
 import { ShoppingCart, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -27,7 +27,7 @@ const ProductCard = ({
   const leadLabel = leadTimeDays === 0 ? "Same-day" : `${leadTimeDays}d lead`;
 
   const handleAdd = () => {
-    const added = addItem({
+    const result = addItem({
       productId: id,
       name,
       price,
@@ -35,11 +35,7 @@ const ProductCard = ({
       leadTimeDays,
       availableStock: maxStock,
     });
-    toast(
-      added
-        ? { title: "Added to cart", description: `${name} added!` }
-        : { title: "Stock limit reached", description: `Only ${maxStock ?? 0} available for this item.`, variant: "destructive" }
-    );
+    toast(stockToast(name, result));
   };
 
   const earliestDate = new Date();
