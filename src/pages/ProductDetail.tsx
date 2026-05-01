@@ -6,10 +6,12 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCart, stockToast } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ShoppingCart, Clock, Package, Calendar, ArrowLeft, Minus, Plus, AlertTriangle } from "lucide-react";
-import { useState } from "react";
+import { Loader2, ShoppingCart, Clock, Package, Calendar, ArrowLeft, Minus, Plus, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import ProductReviews from "@/components/ProductReviews";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +19,7 @@ const ProductDetail = () => {
   const { addItem } = useCart();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
+  const [selectedVariantId, setSelectedVariantId] = useState<string>("");
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", id],
@@ -32,27 +35,84 @@ const ProductDetail = () => {
     enabled: !!id,
   });
 
+  const { data: variants } = useQuery({
+    queryKey: ["product-variants", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_variant_links")
+        .select("variant_id, sort_order, product_variants:variant_id (id, name, price, image_url, in_stock, daily_capacity)")
+        .eq("product_id", id!)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data ?? [])
+        .map((row: any) => row.product_variants)
+        .filter(Boolean) as Array<{
+          id: string; name: string; price: number; image_url: string | null; in_stock: boolean; daily_capacity: number | null;
+        }>;
+    },
+    enabled: !!id,
+  });
+
+  const selectedVariant = useMemo(
+    () => variants?.find((v) => v.id === selectedVariantId) ?? null,
+    [variants, selectedVariantId]
+  );
+
+  // Effective values: variant overrides product when chosen
+  const effective = useMemo(() => {
+    if (!product) return null;
+    if (selectedVariant) {
+      return {
+        price: Number(selectedVariant.price),
+        imageUrl: selectedVariant.image_url ?? product.image_url,
+        inStock: selectedVariant.in_stock,
+        dailyCapacity: selectedVariant.daily_capacity,
+        label: ` · ${selectedVariant.name}`,
+      };
+    }
+    return {
+      price: Number(product.price),
+      imageUrl: product.image_url,
+      inStock: product.in_stock,
+      dailyCapacity: product.daily_capacity,
+      label: "",
+    };
+  }, [product, selectedVariant]);
+
+  const maxQty = effective?.dailyCapacity ?? 99;
+
   const handleAdd = () => {
-    if (!product) return;
+    if (!product || !effective) return;
+    if (variants && variants.length > 0 && !selectedVariant) {
+      toast({
+        title: "Choose an option",
+        description: "Please select a variant before adding to cart.",
+        variant: "destructive",
+      });
+      return;
+    }
     let addedCount = 0;
-    let lastResult;
+    let lastResult: ReturnType<typeof addItem> | undefined;
     for (let i = 0; i < quantity; i++) {
       const result = addItem({
         productId: product.id,
+        variantId: selectedVariant?.id ?? null,
+        variantName: selectedVariant?.name ?? null,
         name: product.name,
-        price: product.price,
-        imageUrl: product.image_url,
+        price: effective.price,
+        imageUrl: effective.imageUrl,
         leadTimeDays: product.lead_time_days,
-        availableStock: product.daily_capacity ?? null,
+        availableStock: effective.dailyCapacity ?? null,
       });
       lastResult = result;
       if (result.ok) addedCount += 1;
       else break;
     }
+    const labelName = `${product.name}${effective.label}`;
     if (addedCount > 0) {
-      toast(stockToast(product.name, { ok: true, quantity: addedCount, remaining: lastResult && lastResult.ok ? lastResult.remaining : null }));
+      toast(stockToast(labelName, { ok: true, quantity: addedCount, remaining: lastResult && lastResult.ok ? lastResult.remaining : null }));
     } else if (lastResult) {
-      toast(stockToast(product.name, lastResult));
+      toast(stockToast(labelName, lastResult));
     }
   };
 
@@ -64,7 +124,7 @@ const ProductDetail = () => {
     );
   }
 
-  if (!product) {
+  if (!product || !effective) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -85,7 +145,9 @@ const ProductDetail = () => {
     month: "long",
   });
 
-  const maxQty = product.daily_capacity ?? 99;
+  const hasVariants = (variants?.length ?? 0) > 0;
+  const requiresVariantPick = hasVariants && !selectedVariant;
+  const atCap = quantity >= maxQty;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -103,9 +165,9 @@ const ProductDetail = () => {
           <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
             {/* Image */}
             <div className="aspect-square rounded-2xl overflow-hidden bg-muted border border-border/50">
-              {product.image_url ? (
+              {effective.imageUrl ? (
                 <img
-                  src={product.image_url}
+                  src={effective.imageUrl}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
@@ -124,9 +186,10 @@ const ProductDetail = () => {
                 </Badge>
                 <h1 className="font-heading text-3xl md:text-4xl text-foreground">
                   {product.name}
+                  {effective.label && <span className="text-2xl text-muted-foreground"> {effective.label}</span>}
                 </h1>
                 <p className="font-heading text-2xl text-accent mt-3">
-                  Rs. {product.price.toLocaleString()}
+                  Rs. {effective.price.toLocaleString()}
                 </p>
               </div>
 
@@ -134,6 +197,41 @@ const ProductDetail = () => {
                 <p className="text-muted-foreground leading-relaxed">
                   {product.description}
                 </p>
+              )}
+
+              {/* Variant selector */}
+              {hasVariants && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium block">Choose option *</label>
+                  <Select value={selectedVariantId} onValueChange={(v) => { setSelectedVariantId(v); setQuantity(1); }}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a variant…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {variants!.map((v) => (
+                        <SelectItem key={v.id} value={v.id} disabled={!v.in_stock || (v.daily_capacity != null && v.daily_capacity <= 0)}>
+                          <span className="flex items-center gap-2">
+                            <span>{v.name}</span>
+                            <span className="text-muted-foreground">— Rs. {Number(v.price).toLocaleString()}</span>
+                            {!v.in_stock || (v.daily_capacity != null && v.daily_capacity <= 0)
+                              ? <span className="text-xs text-destructive">· Sold out</span>
+                              : v.daily_capacity != null
+                                ? <span className="text-xs text-muted-foreground">· {v.daily_capacity}/day</span>
+                                : null}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedVariant && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-accent" />
+                      {selectedVariant.daily_capacity != null
+                        ? `Up to ${selectedVariant.daily_capacity} of "${selectedVariant.name}" available per day`
+                        : `"${selectedVariant.name}" available`}
+                    </p>
+                  )}
+                </div>
               )}
 
               {/* Qualities / Info cards */}
@@ -162,14 +260,14 @@ const ProductDetail = () => {
                   </CardContent>
                 </Card>
 
-                {product.daily_capacity && (
+                {effective.dailyCapacity && (
                   <Card className="border-border/50 col-span-2">
                     <CardContent className="p-4 flex items-start gap-3">
                       <Package className="w-5 h-5 text-accent shrink-0 mt-0.5" />
                       <div>
                         <p className="text-xs text-muted-foreground">Daily availability</p>
                         <p className="text-sm font-medium">
-                          Up to {product.daily_capacity} per day — limited batch
+                          Up to {effective.dailyCapacity} per day — limited batch
                         </p>
                       </div>
                     </CardContent>
@@ -177,7 +275,7 @@ const ProductDetail = () => {
                 )}
               </div>
 
-              {!product.in_stock && (
+              {!effective.inStock && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
                   <AlertTriangle className="w-4 h-4" />
                   Currently unavailable
@@ -185,7 +283,7 @@ const ProductDetail = () => {
               )}
 
               {/* Quantity + Add */}
-              {product.in_stock && (
+              {effective.inStock && !requiresVariantPick && (
                 <div className="space-y-4 pt-2">
                   <div>
                     <label className="text-sm font-medium block mb-2">Quantity</label>
@@ -205,25 +303,42 @@ const ProductDetail = () => {
                         variant="outline"
                         size="icon"
                         onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
-                        disabled={quantity >= maxQty}
+                        disabled={atCap}
                       >
                         <Plus className="w-4 h-4" />
                       </Button>
-                      {product.daily_capacity && (
+                      {effective.dailyCapacity && (
                         <span className="text-xs text-muted-foreground ml-2">
                           Max {maxQty}/day
                         </span>
                       )}
                     </div>
+                    {atCap && effective.dailyCapacity != null && (
+                      <p className="mt-2 text-xs text-vendel-rose font-medium flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        Max {effective.dailyCapacity} available — daily capacity reached
+                      </p>
+                    )}
                   </div>
 
                   <Button size="lg" className="w-full gap-2" onClick={handleAdd}>
                     <ShoppingCart className="w-5 h-5" />
-                    Add {quantity} to cart — Rs. {(product.price * quantity).toLocaleString()}
+                    Add {quantity} to cart — Rs. {(effective.price * quantity).toLocaleString()}
                   </Button>
                 </div>
               )}
+
+              {requiresVariantPick && (
+                <p className="text-sm text-muted-foreground italic">
+                  Select an option above to add this product to your cart.
+                </p>
+              )}
             </div>
+          </div>
+
+          {/* Reviews */}
+          <div className="mt-16">
+            <ProductReviews productId={product.id} />
           </div>
         </div>
       </main>
