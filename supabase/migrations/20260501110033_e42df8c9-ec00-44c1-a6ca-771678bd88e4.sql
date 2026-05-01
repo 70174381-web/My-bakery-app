@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.filter_review_spam() FROM PUBLIC, anon, authenticated;
