@@ -131,7 +131,7 @@ export const useCart = () => {
 
 // Shared toast wording so add-to-cart and quantity-change feel consistent.
 export const stockToast = (name: string, result: StockResult) => {
-  if (result.ok) {
+  if (result.ok === true) {
     const remaining = result.remaining;
     return {
       title: "Added to cart",
