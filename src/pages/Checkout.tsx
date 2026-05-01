@@ -567,13 +567,15 @@ const Checkout = () => {
                   {/* Item list (compact in payment step) */}
                   {step === "payment" && (
                     <div className="space-y-2 text-sm">
-                      {items.map((item) => (
-                        <div key={item.productId} className="flex justify-between gap-3 text-foreground">
+                      {items.map((item) => {
+                        const soldOut = item.availableStock != null && item.availableStock <= 0;
+                        return (
+                        <div key={getLineKey(item.productId, item.variantId)} className="flex justify-between gap-3 text-foreground">
                           <span className="min-w-0 mr-2">
-                            <span className="block truncate">{item.name} × {item.quantity}</span>
+                            <span className="block truncate">{item.name}{item.variantName ? ` · ${item.variantName}` : ""} × {item.quantity}</span>
                             <span className="mt-1 flex flex-wrap items-center gap-1.5">
-                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${item.availableStock === 0 ? "bg-destructive/10 text-destructive" : "bg-accent/10 text-accent"}`}>
-                                {item.availableStock === 0 ? "Sold out" : "Available"}
+                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${soldOut ? "bg-destructive/10 text-destructive" : "bg-accent/10 text-accent-foreground"}`}>
+                                {soldOut ? "Sold out" : "Available"}
                               </span>
                               <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                                 {item.leadTimeDays === 0 ? "Same-day" : `${item.leadTimeDays}d lead`}
@@ -584,7 +586,8 @@ const Checkout = () => {
                             Rs. {(item.price * item.quantity).toLocaleString()}
                           </span>
                         </div>
-                      ))}
+                        );
+                      })}
                       <Separator />
                     </div>
                   )}
