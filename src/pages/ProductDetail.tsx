@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { useCart } from "@/hooks/useCart";
+import { useCart, stockToast } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ShoppingCart, Clock, Package, Calendar, ArrowLeft, Minus, Plus, AlertTriangle } from "lucide-react";
 import { useState } from "react";
@@ -35,8 +35,9 @@ const ProductDetail = () => {
   const handleAdd = () => {
     if (!product) return;
     let addedCount = 0;
+    let lastResult;
     for (let i = 0; i < quantity; i++) {
-      const added = addItem({
+      const result = addItem({
         productId: product.id,
         name: product.name,
         price: product.price,
@@ -44,13 +45,15 @@ const ProductDetail = () => {
         leadTimeDays: product.lead_time_days,
         availableStock: product.daily_capacity ?? null,
       });
-      if (added) addedCount += 1;
+      lastResult = result;
+      if (result.ok) addedCount += 1;
+      else break;
     }
-    toast({
-      title: addedCount > 0 ? "Added to cart" : "Stock limit reached",
-      description: addedCount > 0 ? `${addedCount} × ${product.name} added!` : `Only ${maxQty} available for this item.`,
-      variant: addedCount > 0 ? "default" : "destructive",
-    });
+    if (addedCount > 0) {
+      toast(stockToast(product.name, { ok: true, quantity: addedCount, remaining: lastResult && lastResult.ok ? lastResult.remaining : null }));
+    } else if (lastResult) {
+      toast(stockToast(product.name, lastResult));
+    }
   };
 
   if (isLoading) {
