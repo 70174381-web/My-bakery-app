@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { useCart } from "@/hooks/useCart";
+import { useCart, stockToast } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ShoppingCart, Clock, Package, Calendar, ArrowLeft, Minus, Plus, AlertTriangle } from "lucide-react";
 import { useState } from "react";
