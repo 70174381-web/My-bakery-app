@@ -72,6 +72,7 @@ const Checkout = () => {
 
   const [step, setStep] = useState<Step>("cart");
   const [placing, setPlacing] = useState(false);
+  const [inputErrors, setInputErrors] = useState<Record<string, string | undefined>>({});
 
   // Contact fields
   const [name, setName] = useState("");
