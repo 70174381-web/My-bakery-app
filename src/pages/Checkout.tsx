@@ -297,8 +297,21 @@ const Checkout = () => {
             <div className="lg:col-span-2 space-y-4">
               {step === "cart" && (
                 <>
-                  {items.map((item) => (
-                    <Card key={item.productId} className="border-border/50">
+                  {items.map((item) => {
+                    const key = getLineKey(item.productId, item.variantId);
+                    const stock = item.availableStock;
+                    const soldOut = stock != null && stock <= 0;
+                    const atCap = stock != null && item.quantity >= stock;
+                    const handleQtyChange = (next: number) => {
+                      const result = updateQuantity(key, next);
+                      if (!result.ok) toast(stockToast(item.name, result));
+                    };
+                    const handleInput = (raw: string) => {
+                      const result = setQuantityFromInput(key, raw);
+                      if (!result.ok) toast(stockToast(item.name, result));
+                    };
+                    return (
+                    <Card key={key} className="border-border/50">
                       <CardContent className="p-4 flex gap-4">
                         <div className="w-20 h-20 rounded-lg bg-muted overflow-hidden flex-shrink-0">
                           {item.imageUrl ? (
@@ -316,15 +329,23 @@ const Checkout = () => {
                         <div className="flex-1 min-w-0">
                           <h3 className="font-heading text-lg text-foreground leading-tight truncate">
                             {item.name}
+                            {item.variantName && (
+                              <span className="text-sm text-muted-foreground font-body ml-1">· {item.variantName}</span>
+                            )}
                           </h3>
                           <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${item.availableStock === 0 ? "bg-destructive/10 text-destructive" : "bg-accent/10 text-accent"}`}>
-                              {item.availableStock === 0 ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
-                              {item.availableStock === 0 ? "Sold out" : "Available"}
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${soldOut ? "bg-destructive/10 text-destructive" : "bg-accent/10 text-accent-foreground"}`}>
+                              {soldOut ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                              {soldOut ? "Sold out" : "Available"}
                             </span>
                             <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                               {item.leadTimeDays === 0 ? "Same-day" : `${item.leadTimeDays}d lead`}
                             </span>
+                            {stock != null && !soldOut && (
+                              <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                                {stock}/day max
+                              </span>
+                            )}
                           </div>
                           <p className="text-sm text-muted-foreground mt-0.5">
                             Rs. {item.price.toLocaleString()} each
@@ -334,36 +355,45 @@ const Checkout = () => {
                               variant="outline"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                              onClick={() => handleQtyChange(item.quantity - 1)}
                             >
                               <Minus className="w-3 h-3" />
                             </Button>
-                            <span className="font-body text-sm w-8 text-center text-foreground">
-                              {item.quantity}
-                            </span>
+                            <Input
+                              type="number"
+                              inputMode="numeric"
+                              min={1}
+                              max={stock ?? undefined}
+                              value={item.quantity}
+                              onChange={(e) => handleInput(e.target.value)}
+                              onBlur={(e) => handleInput(e.target.value || "1")}
+                              className="h-8 w-14 text-center px-1"
+                              aria-label={`Quantity for ${item.name}`}
+                            />
                             <Button
                               variant="outline"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                              disabled={item.availableStock != null && item.quantity >= item.availableStock}
+                              onClick={() => handleQtyChange(item.quantity + 1)}
+                              disabled={atCap || soldOut}
                             >
                               <Plus className="w-3 h-3" />
                             </Button>
-                            {item.availableStock != null && (
-                              <span className="text-xs text-muted-foreground">
-                                Max {item.availableStock}
-                              </span>
-                            )}
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-destructive hover:text-destructive ml-auto"
-                              onClick={() => removeItem(item.productId)}
+                              onClick={() => removeItem(key)}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
+                          {atCap && stock != null && (
+                            <p className="mt-1.5 text-xs text-vendel-rose font-medium flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              Max {stock} available — daily capacity reached
+                            </p>
+                          )}
                         </div>
                         <div className="text-right flex-shrink-0">
                           <span className="font-heading text-lg text-foreground">
@@ -372,7 +402,8 @@ const Checkout = () => {
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                    );
+                  })}
                   <Button
                     variant="ghost"
                     size="sm"
