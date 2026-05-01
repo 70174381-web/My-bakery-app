@@ -302,11 +302,22 @@ const Checkout = () => {
                     const stock = item.availableStock;
                     const soldOut = stock != null && stock <= 0;
                     const atCap = stock != null && item.quantity >= stock;
+                    const inputError = inputErrors[key];
                     const handleQtyChange = (next: number) => {
                       const result = updateQuantity(key, next);
+                      setInputErrors((p) => ({ ...p, [key]: undefined }));
                       if (!result.ok) toast(stockToast(item.name, result));
                     };
                     const handleInput = (raw: string) => {
+                      const parsed = parseInt(raw.replace(/[^0-9]/g, ""), 10);
+                      if (!isNaN(parsed) && stock != null && parsed > stock) {
+                        setInputErrors((p) => ({
+                          ...p,
+                          [key]: `Only ${stock} available — auto-corrected from ${parsed}.`,
+                        }));
+                      } else {
+                        setInputErrors((p) => ({ ...p, [key]: undefined }));
+                      }
                       const result = setQuantityFromInput(key, raw);
                       if (!result.ok) toast(stockToast(item.name, result));
                     };
@@ -367,8 +378,9 @@ const Checkout = () => {
                               value={item.quantity}
                               onChange={(e) => handleInput(e.target.value)}
                               onBlur={(e) => handleInput(e.target.value || "1")}
-                              className="h-8 w-14 text-center px-1"
+                              className={`h-8 w-14 text-center px-1 ${inputError ? "border-destructive focus-visible:ring-destructive" : ""}`}
                               aria-label={`Quantity for ${item.name}`}
+                              aria-invalid={!!inputError}
                             />
                             <Button
                               variant="outline"
@@ -388,7 +400,13 @@ const Checkout = () => {
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
-                          {atCap && stock != null && (
+                          {inputError && (
+                            <p className="mt-1.5 text-xs text-destructive font-medium flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              {inputError}
+                            </p>
+                          )}
+                          {!inputError && atCap && stock != null && (
                             <p className="mt-1.5 text-xs text-vendel-rose font-medium flex items-center gap-1">
                               <AlertTriangle className="h-3 w-3" />
                               Max {stock} available — daily capacity reached
