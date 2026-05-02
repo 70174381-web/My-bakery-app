@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Plus, Pencil, Trash2, Loader2, Layers } from "lucide-react";
+import { LogOut, Plus, Pencil, Trash2, Loader2, Layers, ShieldCheck } from "lucide-react";
 import VariantManager from "@/components/admin/VariantManager";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -167,9 +168,14 @@ const AdminDashboard = () => {
           <h1 className="font-heading text-2xl text-foreground">Vendel Bakes Admin</h1>
           <p className="text-sm text-muted-foreground">{user?.email}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={signOut}>
-          <LogOut className="w-4 h-4 mr-2" /> Sign Out
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/reviews"><ShieldCheck className="w-4 h-4 mr-2" /> Reviews</Link>
+          </Button>
+          <Button variant="outline" size="sm" onClick={signOut}>
+            <LogOut className="w-4 h-4 mr-2" /> Sign Out
+          </Button>
+        </div>
       </header>
 
       <main className="max-w-6xl mx-auto p-6">

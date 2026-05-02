@@ -255,9 +255,11 @@ export type Database = {
         Row: {
           body: string
           created_at: string
+          helpful_count: number
           id: string
           product_id: string | null
           rating: number
+          rejection_reason: string | null
           reviewer_name: string
           status: string
           title: string | null
@@ -267,9 +269,11 @@ export type Database = {
         Insert: {
           body: string
           created_at?: string
+          helpful_count?: number
           id?: string
           product_id?: string | null
           rating: number
+          rejection_reason?: string | null
           reviewer_name: string
           status?: string
           title?: string | null
@@ -279,9 +283,11 @@ export type Database = {
         Update: {
           body?: string
           created_at?: string
+          helpful_count?: number
           id?: string
           product_id?: string | null
           rating?: number
+          rejection_reason?: string | null
           reviewer_name?: string
           status?: string
           title?: string | null
