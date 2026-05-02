@@ -306,57 +306,76 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Quantity + Add */}
-              {effective.inStock && !requiresVariantPick && (
-                <div className="space-y-4 pt-2">
-                  <div>
-                    <label className="text-sm font-medium block mb-2">Quantity</label>
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                        disabled={quantity <= 1}
-                      >
-                        <Minus className="w-4 h-4" />
-                      </Button>
-                      <span className="font-heading text-xl w-12 text-center">
-                        {quantity}
+              {/* Quantity + Add (always rendered so users see the disabled state and reason) */}
+              <div className="space-y-4 pt-2">
+                <div>
+                  <label className="text-sm font-medium block mb-2">Quantity</label>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      disabled={quantity <= 1 || addDisabled}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </Button>
+                    <span className="font-heading text-xl w-12 text-center">
+                      {quantity}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
+                      disabled={atCap || addDisabled}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                    {effective.dailyCapacity != null && (
+                      <span className="text-xs text-muted-foreground ml-2">
+                        Max {maxQty}/day
                       </span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
-                        disabled={atCap}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                      {effective.dailyCapacity && (
-                        <span className="text-xs text-muted-foreground ml-2">
-                          Max {maxQty}/day
-                        </span>
-                      )}
-                    </div>
-                    {atCap && effective.dailyCapacity != null && (
-                      <p className="mt-2 text-xs text-vendel-rose font-medium flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        Max {effective.dailyCapacity} available — daily capacity reached
-                      </p>
                     )}
                   </div>
-
-                  <Button size="lg" className="w-full gap-2" onClick={handleAdd}>
-                    <ShoppingCart className="w-5 h-5" />
-                    Add {quantity} to cart — Rs. {(effective.price * quantity).toLocaleString()}
-                  </Button>
+                  {atCap && effective.dailyCapacity != null && !addDisabled && (
+                    <p className="mt-2 text-xs text-vendel-rose font-medium flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      Max {effective.dailyCapacity} available — daily capacity reached
+                    </p>
+                  )}
                 </div>
-              )}
 
-              {requiresVariantPick && (
-                <p className="text-sm text-muted-foreground italic">
-                  Select an option above to add this product to your cart.
-                </p>
-              )}
+                {/* Live remaining-capacity helper directly above the button */}
+                {selectedVariant && !variantUnavailable && selectedVariant.daily_capacity != null && (
+                  <p className="text-sm flex items-center gap-1.5 text-foreground/80">
+                    <Package className="w-4 h-4 text-accent" />
+                    <span>
+                      <strong>{Math.max(0, selectedVariant.daily_capacity - quantity)}</strong> of{" "}
+                      <strong>{selectedVariant.daily_capacity}</strong> “{selectedVariant.name}” left for today
+                    </span>
+                  </p>
+                )}
+
+                <Button
+                  size="lg"
+                  className="w-full gap-2"
+                  onClick={handleAdd}
+                  disabled={addDisabled}
+                  variant={addDisabled ? "secondary" : "default"}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  {requiresVariantPick
+                    ? "Select an option to continue"
+                    : variantUnavailable || !effective.inStock
+                      ? "Sold out"
+                      : `Add ${quantity} to cart — Rs. ${(effective.price * quantity).toLocaleString()}`}
+                </Button>
+
+                {requiresVariantPick && (
+                  <p className="text-xs text-muted-foreground italic text-center">
+                    Pick a variant above to enable add-to-cart.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
