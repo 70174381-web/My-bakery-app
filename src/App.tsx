@@ -12,6 +12,7 @@ import ProductDetail from "./pages/ProductDetail.tsx";
 import AdminLogin from "./pages/AdminLogin.tsx";
 import AdminOnboarding from "./pages/AdminOnboarding.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
+import AdminReviews from "./pages/AdminReviews.tsx";
 import Checkout from "./pages/Checkout.tsx";
 import OrderStatus from "./pages/OrderStatus.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -40,6 +41,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/reviews"
+                element={
+                  <ProtectedRoute>
+                    <AdminReviews />
                   </ProtectedRoute>
                 }
               />
