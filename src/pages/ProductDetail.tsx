@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCart, stockToast } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ShoppingCart, Clock, Package, Calendar, ArrowLeft, Minus, Plus, AlertTriangle, CheckCircle2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ProductReviews from "@/components/ProductReviews";
 
 const ProductDetail = () => {
@@ -148,6 +148,30 @@ const ProductDetail = () => {
   const hasVariants = (variants?.length ?? 0) > 0;
   const requiresVariantPick = hasVariants && !selectedVariant;
   const atCap = quantity >= maxQty;
+  const variantUnavailable = !!selectedVariant && (
+    !selectedVariant.in_stock ||
+    (selectedVariant.daily_capacity != null && selectedVariant.daily_capacity <= 0)
+  );
+
+  // Auto-clear the chosen variant if it becomes unavailable (e.g. admin updates stock).
+  useEffect(() => {
+    if (!selectedVariant) return;
+    if (variantUnavailable) {
+      setSelectedVariantId("");
+      setQuantity(1);
+      toast({
+        title: "Variant unavailable",
+        description: `“${selectedVariant.name}” just went out of stock — please pick another option.`,
+        variant: "destructive",
+      });
+    }
+  }, [variantUnavailable, selectedVariant, toast]);
+
+  const addDisabled =
+    !effective?.inStock ||
+    requiresVariantPick ||
+    variantUnavailable ||
+    (effective?.dailyCapacity != null && effective.dailyCapacity <= 0);
 
   return (
     <div className="min-h-screen flex flex-col">
