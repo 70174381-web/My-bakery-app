@@ -24,6 +24,28 @@ const Shop = () => {
     },
   });
 
+  const { data: ratings } = useQuery({
+    queryKey: ["product-ratings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("product_id, rating")
+        .eq("status", "approved");
+      if (error) throw error;
+      const map = new Map<string, { sum: number; count: number }>();
+      (data ?? []).forEach((r) => {
+        if (!r.product_id) return;
+        const cur = map.get(r.product_id) ?? { sum: 0, count: 0 };
+        cur.sum += r.rating;
+        cur.count += 1;
+        map.set(r.product_id, cur);
+      });
+      const result: Record<string, { avg: number; count: number }> = {};
+      map.forEach((v, k) => { result[k] = { avg: v.sum / v.count, count: v.count }; });
+      return result;
+    },
+  });
+
   const filtered =
     activeCategory === "all"
       ? products
@@ -78,6 +100,8 @@ const Shop = () => {
                   inStock={product.in_stock}
                   leadTimeDays={product.lead_time_days}
                   dailyCapacity={product.daily_capacity}
+                  ratingAverage={ratings?.[product.id]?.avg ?? null}
+                  ratingCount={ratings?.[product.id]?.count ?? 0}
                 />
               ))}
             </div>

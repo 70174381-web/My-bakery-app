@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCart, stockToast } from "@/hooks/useCart";
-import { ShoppingCart, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ShoppingCart, Clock, AlertTriangle, CheckCircle2, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
@@ -16,10 +16,13 @@ interface ProductCardProps {
   inStock: boolean;
   leadTimeDays: number;
   dailyCapacity: number | null;
+  ratingAverage?: number | null;
+  ratingCount?: number;
 }
 
 const ProductCard = ({
   id, name, description, price, imageUrl, category, inStock, leadTimeDays, dailyCapacity,
+  ratingAverage, ratingCount = 0,
 }: ProductCardProps) => {
   const { addItem } = useCart();
   const { toast } = useToast();
@@ -80,6 +83,15 @@ const ProductCard = ({
           <Badge className="absolute top-2 right-2 text-xs bg-accent text-accent-foreground">
             {dailyCapacity && inStock ? `${dailyCapacity}/day` : leadLabel}
           </Badge>
+
+          {/* Rating badge */}
+          {ratingCount > 0 && ratingAverage != null && (
+            <Badge className="absolute bottom-2 left-2 text-xs gap-1 bg-card/95 text-foreground backdrop-blur-sm border border-border/60 shadow-sm">
+              <Star className="w-3 h-3 fill-vendel-gold text-vendel-gold" />
+              <span className="font-semibold">{ratingAverage.toFixed(1)}</span>
+              <span className="text-muted-foreground">({ratingCount})</span>
+            </Badge>
+          )}
         </div>
       </Link>
 
@@ -120,3 +132,4 @@ const ProductCard = ({
 };
 
 export default ProductCard;
+
