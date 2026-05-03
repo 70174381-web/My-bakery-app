@@ -7,8 +7,6 @@ import { useCart } from "@/hooks/useCart";
 const navLinks = [
   { label: "Home", to: "/" },
   { label: "Shop", to: "/shop" },
-  { label: "Our Story", to: "/#story" },
-  { label: "Reviews", to: "/#reviews" },
   { label: "Track Order", to: "/track" },
 ];
 
