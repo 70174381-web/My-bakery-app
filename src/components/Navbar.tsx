@@ -9,6 +9,7 @@ const navLinks = [
   { label: "Home", to: "/" },
   { label: "Shop", to: "/shop" },
   { label: "Customize", to: "/customize" },
+  { label: "My Quotes", to: "/my-quotes" },
   { label: "Track Order", to: "/order-status" },
 ];
 
@@ -19,9 +20,13 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <img src={logo} alt="Vendel Bakes" className="h-10 w-10 rounded-full object-cover ring-2 ring-vendel-rose/30" />
-          <span className="font-heading text-xl font-semibold text-foreground tracking-wide">Vendel Bakes</span>
+        <Link to="/" className="flex items-center gap-2 shrink-0">
+          <img
+            src={logo}
+            alt="Vendel Bakes"
+            className="h-10 w-10 sm:h-11 sm:w-11 rounded-full object-cover ring-2 ring-vendel-rose/40 shadow-sm shrink-0"
+          />
+          <span className="font-heading text-base sm:text-xl font-semibold text-foreground tracking-wide whitespace-nowrap">Vendel Bakes</span>
         </Link>
 
         {/* Desktop nav */}
