@@ -36,6 +36,7 @@ const App = () => (
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/customize" element={<Customize />} />
+              <Route path="/my-quotes" element={<QuoteLookup />} />
               <Route path="/order-status" element={<OrderStatus />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin/signup" element={<AdminLogin mode="signup" />} />
@@ -53,6 +54,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <AdminReviews />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/quotes"
+                element={
+                  <ProtectedRoute>
+                    <AdminQuotes />
                   </ProtectedRoute>
                 }
               />
