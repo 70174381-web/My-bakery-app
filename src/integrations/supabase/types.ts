@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       custom_quotes: {
         Row: {
+          admin_message: string | null
           budget: string | null
           contact: string
           created_at: string
@@ -24,12 +25,15 @@ export type Database = {
           id: string
           needed_by: string | null
           occasion: string | null
+          offered_price: number | null
           request_type: string
+          responded_at: string | null
           servings: number | null
           status: string
           updated_at: string
         }
         Insert: {
+          admin_message?: string | null
           budget?: string | null
           contact: string
           created_at?: string
@@ -38,12 +42,15 @@ export type Database = {
           id?: string
           needed_by?: string | null
           occasion?: string | null
+          offered_price?: number | null
           request_type?: string
+          responded_at?: string | null
           servings?: number | null
           status?: string
           updated_at?: string
         }
         Update: {
+          admin_message?: string | null
           budget?: string | null
           contact?: string
           created_at?: string
@@ -52,7 +59,9 @@ export type Database = {
           id?: string
           needed_by?: string | null
           occasion?: string | null
+          offered_price?: number | null
           request_type?: string
+          responded_at?: string | null
           servings?: number | null
           status?: string
           updated_at?: string
@@ -379,6 +388,24 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      lookup_custom_quotes: {
+        Args: { _contact: string }
+        Returns: {
+          admin_message: string
+          budget: string
+          created_at: string
+          customer_name: string
+          details: string
+          id: string
+          needed_by: string
+          occasion: string
+          offered_price: number
+          request_type: string
+          responded_at: string
+          servings: number
+          status: string
+        }[]
       }
     }
     Enums: {
