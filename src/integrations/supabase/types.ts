@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      custom_quotes: {
+        Row: {
+          budget: string | null
+          contact: string
+          created_at: string
+          customer_name: string
+          details: string
+          id: string
+          needed_by: string | null
+          occasion: string | null
+          request_type: string
+          servings: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          budget?: string | null
+          contact: string
+          created_at?: string
+          customer_name: string
+          details: string
+          id?: string
+          needed_by?: string | null
+          occasion?: string | null
+          request_type?: string
+          servings?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          budget?: string | null
+          contact?: string
+          created_at?: string
+          customer_name?: string
+          details?: string
+          id?: string
+          needed_by?: string | null
+          occasion?: string | null
+          request_type?: string
+          servings?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
