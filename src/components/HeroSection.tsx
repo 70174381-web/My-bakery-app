@@ -42,9 +42,9 @@ const HeroSection = () => (
             Browse the Menu
           </Button>
         </Link>
-        <Link to="/track">
+        <Link to="/customize">
           <Button variant="outline" size="lg" className="border-primary-foreground/50 text-primary-foreground bg-transparent hover:bg-primary-foreground/10 font-body px-10 py-6 text-lg rounded-full backdrop-blur-sm">
-            Track Your Order
+            Customize
           </Button>
         </Link>
       </div>

@@ -14,6 +14,7 @@ import AdminOnboarding from "./pages/AdminOnboarding.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import AdminReviews from "./pages/AdminReviews.tsx";
 import Checkout from "./pages/Checkout.tsx";
+import Customize from "./pages/Customize.tsx";
 import OrderStatus from "./pages/OrderStatus.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/shop" element={<Shop />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/customize" element={<Customize />} />
               <Route path="/order-status" element={<OrderStatus />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin/signup" element={<AdminLogin mode="signup" />} />
