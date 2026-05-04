@@ -13,8 +13,10 @@ import AdminLogin from "./pages/AdminLogin.tsx";
 import AdminOnboarding from "./pages/AdminOnboarding.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import AdminReviews from "./pages/AdminReviews.tsx";
+import AdminQuotes from "./pages/AdminQuotes.tsx";
 import Checkout from "./pages/Checkout.tsx";
 import Customize from "./pages/Customize.tsx";
+import QuoteLookup from "./pages/QuoteLookup.tsx";
 import OrderStatus from "./pages/OrderStatus.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -34,6 +36,7 @@ const App = () => (
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/customize" element={<Customize />} />
+              <Route path="/my-quotes" element={<QuoteLookup />} />
               <Route path="/order-status" element={<OrderStatus />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin/signup" element={<AdminLogin mode="signup" />} />
@@ -51,6 +54,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <AdminReviews />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/quotes"
+                element={
+                  <ProtectedRoute>
+                    <AdminQuotes />
                   </ProtectedRoute>
                 }
               />

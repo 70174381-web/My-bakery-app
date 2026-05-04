@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Plus, Pencil, Trash2, Loader2, Layers, ShieldCheck } from "lucide-react";
+import { LogOut, Plus, Pencil, Trash2, Loader2, Layers, ShieldCheck, MessageSquareReply } from "lucide-react";
 import VariantManager from "@/components/admin/VariantManager";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -169,6 +169,9 @@ const AdminDashboard = () => {
           <p className="text-sm text-muted-foreground">{user?.email}</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/quotes"><MessageSquareReply className="w-4 h-4 mr-2" /> Quotes</Link>
+          </Button>
           <Button asChild variant="outline" size="sm">
             <Link to="/admin/reviews"><ShieldCheck className="w-4 h-4 mr-2" /> Reviews</Link>
           </Button>
