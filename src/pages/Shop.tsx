@@ -120,6 +120,30 @@ const Shop = () => {
             </p>
           )}
 
+          {/* Search bar */}
+          <div className="max-w-md mx-auto mb-6 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="search"
+              placeholder="Search products by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              disabled={filteringDisabled}
+              className="pl-9 pr-9"
+              aria-label="Search products by name"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
           {/* Category filter */}
           <div className="flex flex-wrap justify-center gap-2 mb-8">
             {categories.map((cat) => (
