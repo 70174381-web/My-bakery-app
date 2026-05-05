@@ -4,12 +4,14 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useEffect, useState } from "react";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, Search, X } from "lucide-react";
 
 const Shop = () => {
   const [activeCategory, setActiveCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const {
     data: products,
@@ -74,10 +76,15 @@ const Shop = () => {
   const categories = ["all", ...dbCategories];
   const filteringDisabled = isError || isLoading;
 
-  const filtered =
+  const categoryFiltered =
     activeCategory === "all" || filteringDisabled
       ? products
       : products?.filter((p) => p.category === activeCategory);
+
+  const trimmedQuery = searchQuery.trim().toLowerCase();
+  const filtered = trimmedQuery
+    ? categoryFiltered?.filter((p) => p.name.toLowerCase().includes(trimmedQuery))
+    : categoryFiltered;
 
   return (
     <div className="min-h-screen">
@@ -112,6 +119,30 @@ const Shop = () => {
               {dbCategories.length > 0 && `: ${dbCategories.join(", ")}`}
             </p>
           )}
+
+          {/* Search bar */}
+          <div className="max-w-md mx-auto mb-6 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="search"
+              placeholder="Search products by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              disabled={filteringDisabled}
+              className="pl-9 pr-9"
+              aria-label="Search products by name"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
 
           {/* Category filter */}
           <div className="flex flex-wrap justify-center gap-2 mb-8">
@@ -159,7 +190,9 @@ const Shop = () => {
           ) : !isError ? (
             <div className="text-center py-20">
               <p className="text-muted-foreground text-lg">
-                {activeCategory === "all"
+                {trimmedQuery
+                  ? `No products match "${searchQuery}"${activeCategory !== "all" ? ` in ${activeCategory}` : ""}.`
+                  : activeCategory === "all"
                   ? "No products yet — check back soon!"
                   : `No ${activeCategory} available right now.`}
               </p>
