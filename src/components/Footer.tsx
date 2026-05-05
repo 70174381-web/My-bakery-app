@@ -13,8 +13,8 @@ const Footer = () => (
         <h4 className="font-heading text-lg font-semibold mb-3">Quick Links</h4>
         <ul className="space-y-2 text-sm font-body text-primary-foreground/70">
           <li><Link to="/shop" className="hover:text-vendel-rose transition-colors">Shop</Link></li>
-          <li><Link to="/track" className="hover:text-vendel-rose transition-colors">Track Order</Link></li>
-          <li><Link to="/admin/login" className="hover:text-vendel-rose transition-colors">Admin</Link></li>
+          <li><Link to="/customize" className="hover:text-vendel-rose transition-colors">Customize</Link></li>
+          <li><Link to="/order-status" className="hover:text-vendel-rose transition-colors">Track Order</Link></li>
         </ul>
       </div>
       <div>

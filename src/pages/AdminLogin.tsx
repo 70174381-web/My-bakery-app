@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, UserPlus } from "lucide-react";
@@ -11,11 +12,17 @@ import { Lock, UserPlus } from "lucide-react";
 const AdminLogin = ({ mode = "login" }: { mode?: "login" | "signup" }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const { signIn, signUpAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const isSignup = mode === "signup";
+
+  useEffect(() => {
+    const saved = localStorage.getItem("vendel_admin_email");
+    if (saved) setEmail(saved);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +33,8 @@ const AdminLogin = ({ mode = "login" }: { mode?: "login" | "signup" }) => {
     if (error) {
       toast({ title: isSignup ? "Signup failed" : "Login failed", description: error.message, variant: "destructive" });
     } else {
+      if (remember) localStorage.setItem("vendel_admin_email", email.trim());
+      else localStorage.removeItem("vendel_admin_email");
       toast({
         title: isSignup ? "Admin signup started" : "Signed in",
         description: isSignup ? "Check your email if verification is required, then sign in." : "Welcome back.",
@@ -72,6 +81,10 @@ const AdminLogin = ({ mode = "login" }: { mode?: "login" | "signup" }) => {
                 autoComplete={isSignup ? "new-password" : "current-password"}
               />
             </div>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+              <Checkbox checked={remember} onCheckedChange={(v) => setRemember(!!v)} />
+              Remember my email on this device
+            </label>
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? (isSignup ? "Creating account…" : "Signing in…") : isSignup ? "Create Admin Account" : "Sign In"}
             </Button>

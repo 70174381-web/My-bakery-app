@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
-const CATEGORIES = ["all", "cakes", "cookies", "brownies", "treats", "other"];
-
 const Shop = () => {
   const [activeCategory, setActiveCategory] = useState("all");
 
@@ -46,6 +44,8 @@ const Shop = () => {
     },
   });
 
+  const categories = ["all", ...Array.from(new Set((products ?? []).map((p) => p.category))).sort()];
+
   const filtered =
     activeCategory === "all"
       ? products
@@ -68,7 +68,7 @@ const Shop = () => {
 
           {/* Category filter */}
           <div className="flex flex-wrap justify-center gap-2 mb-8">
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <Button
                 key={cat}
                 variant={activeCategory === cat ? "default" : "outline"}
