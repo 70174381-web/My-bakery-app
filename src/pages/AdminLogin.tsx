@@ -81,6 +81,10 @@ const AdminLogin = ({ mode = "login" }: { mode?: "login" | "signup" }) => {
                 autoComplete={isSignup ? "new-password" : "current-password"}
               />
             </div>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+              <Checkbox checked={remember} onCheckedChange={(v) => setRemember(!!v)} />
+              Remember my email on this device
+            </label>
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? (isSignup ? "Creating account…" : "Signing in…") : isSignup ? "Create Admin Account" : "Sign In"}
             </Button>
