@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
-const CATEGORIES = ["all", "cakes", "cookies", "brownies", "treats", "other"];
-
 const Shop = () => {
   const [activeCategory, setActiveCategory] = useState("all");
 
