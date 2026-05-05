@@ -44,6 +44,8 @@ const Shop = () => {
     },
   });
 
+  const categories = ["all", ...Array.from(new Set((products ?? []).map((p) => p.category))).sort()];
+
   const filtered =
     activeCategory === "all"
       ? products
