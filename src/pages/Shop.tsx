@@ -68,7 +68,7 @@ const Shop = () => {
 
           {/* Category filter */}
           <div className="flex flex-wrap justify-center gap-2 mb-8">
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <Button
                 key={cat}
                 variant={activeCategory === cat ? "default" : "outline"}
