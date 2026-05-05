@@ -190,7 +190,9 @@ const Shop = () => {
           ) : !isError ? (
             <div className="text-center py-20">
               <p className="text-muted-foreground text-lg">
-                {activeCategory === "all"
+                {trimmedQuery
+                  ? `No products match "${searchQuery}"${activeCategory !== "all" ? ` in ${activeCategory}` : ""}.`
+                  : activeCategory === "all"
                   ? "No products yet — check back soon!"
                   : `No ${activeCategory} available right now.`}
               </p>
