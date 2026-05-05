@@ -19,6 +19,11 @@ const AdminLogin = ({ mode = "login" }: { mode?: "login" | "signup" }) => {
   const { toast } = useToast();
   const isSignup = mode === "signup";
 
+  useEffect(() => {
+    const saved = localStorage.getItem("vendel_admin_email");
+    if (saved) setEmail(saved);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) return;
@@ -28,6 +33,8 @@ const AdminLogin = ({ mode = "login" }: { mode?: "login" | "signup" }) => {
     if (error) {
       toast({ title: isSignup ? "Signup failed" : "Login failed", description: error.message, variant: "destructive" });
     } else {
+      if (remember) localStorage.setItem("vendel_admin_email", email.trim());
+      else localStorage.removeItem("vendel_admin_email");
       toast({
         title: isSignup ? "Admin signup started" : "Signed in",
         description: isSignup ? "Check your email if verification is required, then sign in." : "Welcome back.",
