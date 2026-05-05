@@ -4,13 +4,19 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useEffect, useState } from "react";
+import { Loader2, AlertTriangle } from "lucide-react";
 
 const Shop = () => {
   const [activeCategory, setActiveCategory] = useState("all");
 
-  const { data: products, isLoading } = useQuery({
+  const {
+    data: products,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -44,10 +50,32 @@ const Shop = () => {
     },
   });
 
-  const categories = ["all", ...Array.from(new Set((products ?? []).map((p) => p.category))).sort()];
+  // Debug check: log loaded categories and counts so we can confirm DB coverage
+  const categoryCounts: Record<string, number> = {};
+  (products ?? []).forEach((p) => {
+    categoryCounts[p.category] = (categoryCounts[p.category] ?? 0) + 1;
+  });
+  const dbCategories = Object.keys(categoryCounts).sort();
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (isError) {
+      // eslint-disable-next-line no-console
+      console.error("[Shop debug] Products query failed:", error);
+      return;
+    }
+    // eslint-disable-next-line no-console
+    console.log(
+      `[Shop debug] Loaded ${products?.length ?? 0} products across ${dbCategories.length} categories:`,
+      categoryCounts
+    );
+  }, [isLoading, isError, error, products?.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const categories = ["all", ...dbCategories];
+  const filteringDisabled = isError || isLoading;
 
   const filtered =
-    activeCategory === "all"
+    activeCategory === "all" || filteringDisabled
       ? products
       : products?.filter((p) => p.category === activeCategory);
 
@@ -66,6 +94,25 @@ const Shop = () => {
             </p>
           </div>
 
+          {isError && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Couldn't load products</AlertTitle>
+              <AlertDescription>
+                {(error as Error)?.message ?? "Please refresh the page or try again shortly."}{" "}
+                Filtering is disabled until the menu loads.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Debug summary (only when products are loaded) */}
+          {!isLoading && !isError && products && (
+            <p className="text-center text-xs text-muted-foreground mb-4">
+              Showing {products.length} products across {dbCategories.length} categories
+              {dbCategories.length > 0 && `: ${dbCategories.join(", ")}`}
+            </p>
+          )}
+
           {/* Category filter */}
           <div className="flex flex-wrap justify-center gap-2 mb-8">
             {categories.map((cat) => (
@@ -74,9 +121,13 @@ const Shop = () => {
                 variant={activeCategory === cat ? "default" : "outline"}
                 size="sm"
                 onClick={() => setActiveCategory(cat)}
+                disabled={filteringDisabled}
                 className="capitalize"
               >
                 {cat}
+                {cat !== "all" && categoryCounts[cat] != null && (
+                  <span className="ml-1.5 text-xs opacity-70">({categoryCounts[cat]})</span>
+                )}
               </Button>
             ))}
           </div>
@@ -105,7 +156,7 @@ const Shop = () => {
                 />
               ))}
             </div>
-          ) : (
+          ) : !isError ? (
             <div className="text-center py-20">
               <p className="text-muted-foreground text-lg">
                 {activeCategory === "all"
@@ -113,7 +164,7 @@ const Shop = () => {
                   : `No ${activeCategory} available right now.`}
               </p>
             </div>
-          )}
+          ) : null}
         </div>
       </main>
 
