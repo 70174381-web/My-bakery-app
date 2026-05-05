@@ -76,10 +76,15 @@ const Shop = () => {
   const categories = ["all", ...dbCategories];
   const filteringDisabled = isError || isLoading;
 
-  const filtered =
+  const categoryFiltered =
     activeCategory === "all" || filteringDisabled
       ? products
       : products?.filter((p) => p.category === activeCategory);
+
+  const trimmedQuery = searchQuery.trim().toLowerCase();
+  const filtered = trimmedQuery
+    ? categoryFiltered?.filter((p) => p.name.toLowerCase().includes(trimmedQuery))
+    : categoryFiltered;
 
   return (
     <div className="min-h-screen">
