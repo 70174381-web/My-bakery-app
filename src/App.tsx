@@ -14,6 +14,7 @@ import AdminOnboarding from "./pages/AdminOnboarding.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import AdminReviews from "./pages/AdminReviews.tsx";
 import AdminQuotes from "./pages/AdminQuotes.tsx";
+import AdminPortal from "./pages/AdminPortal.tsx";
 import Checkout from "./pages/Checkout.tsx";
 import Customize from "./pages/Customize.tsx";
 import QuoteLookup from "./pages/QuoteLookup.tsx";
