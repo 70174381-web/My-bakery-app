@@ -6,12 +6,16 @@ import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useState } from "react";
-import { Loader2, AlertTriangle, Search, X } from "lucide-react";
+import { Loader2, AlertTriangle, Search, X, ArrowUpDown } from "lucide-react";
+
+type SortOption = "newest" | "oldest" | "price-asc" | "price-desc" | "name-asc";
 
 const Shop = () => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
 
   const {
     data: products,
@@ -82,9 +86,20 @@ const Shop = () => {
       : products?.filter((p) => p.category === activeCategory);
 
   const trimmedQuery = searchQuery.trim().toLowerCase();
-  const filtered = trimmedQuery
+  const searched = trimmedQuery
     ? categoryFiltered?.filter((p) => p.name.toLowerCase().includes(trimmedQuery))
     : categoryFiltered;
+
+  const filtered = searched ? [...searched].sort((a, b) => {
+    switch (sortBy) {
+      case "price-asc": return Number(a.price) - Number(b.price);
+      case "price-desc": return Number(b.price) - Number(a.price);
+      case "name-asc": return a.name.localeCompare(b.name);
+      case "oldest": return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      case "newest":
+      default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+  }) : searched;
 
   return (
     <div className="min-h-screen">
@@ -120,28 +135,45 @@ const Shop = () => {
             </p>
           )}
 
-          {/* Search bar */}
-          <div className="max-w-md mx-auto mb-6 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              type="search"
-              placeholder="Search products by name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              disabled={filteringDisabled}
-              className="pl-9 pr-9"
-              aria-label="Search products by name"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label="Clear search"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+          {/* Search + sort */}
+          <div className="max-w-2xl mx-auto mb-6 flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                type="search"
+                placeholder="Search products by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                disabled={filteringDisabled}
+                className="pl-9 pr-9"
+                aria-label="Search products by name"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="Clear search"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)} disabled={filteringDisabled}>
+              <SelectTrigger className="sm:w-56" aria-label="Sort products">
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="h-4 w-4 opacity-60" />
+                  <SelectValue placeholder="Sort by" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest first</SelectItem>
+                <SelectItem value="oldest">Oldest first</SelectItem>
+                <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                <SelectItem value="name-asc">Name: A to Z</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Category filter */}
