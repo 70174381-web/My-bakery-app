@@ -86,9 +86,20 @@ const Shop = () => {
       : products?.filter((p) => p.category === activeCategory);
 
   const trimmedQuery = searchQuery.trim().toLowerCase();
-  const filtered = trimmedQuery
+  const searched = trimmedQuery
     ? categoryFiltered?.filter((p) => p.name.toLowerCase().includes(trimmedQuery))
     : categoryFiltered;
+
+  const filtered = searched ? [...searched].sort((a, b) => {
+    switch (sortBy) {
+      case "price-asc": return Number(a.price) - Number(b.price);
+      case "price-desc": return Number(b.price) - Number(a.price);
+      case "name-asc": return a.name.localeCompare(b.name);
+      case "oldest": return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      case "newest":
+      default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+  }) : searched;
 
   return (
     <div className="min-h-screen">
