@@ -6,12 +6,16 @@ import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useState } from "react";
-import { Loader2, AlertTriangle, Search, X } from "lucide-react";
+import { Loader2, AlertTriangle, Search, X, ArrowUpDown } from "lucide-react";
+
+type SortOption = "newest" | "oldest" | "price-asc" | "price-desc" | "name-asc";
 
 const Shop = () => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
 
   const {
     data: products,
