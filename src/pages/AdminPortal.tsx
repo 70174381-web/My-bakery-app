@@ -2,16 +2,42 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShieldCheck, LayoutDashboard, MessageSquareReply, Star, LogIn, UserPlus, ArrowLeft } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ShieldCheck, LayoutDashboard, MessageSquareReply, Star, LogIn, UserPlus, ArrowLeft, Package, ShoppingBag, Clock, LogOut } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminPortal = () => {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isAdmin, loading, signOut } = useAuth();
   const navigate = useNavigate();
 
+  const { data: stats } = useQuery({
+    queryKey: ["admin-portal-stats"],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const [products, orders, pendingOrders, reviewsPending, reviewsApproved, quotesNew] = await Promise.all([
+        supabase.from("products").select("*", { count: "exact", head: true }),
+        supabase.from("orders").select("*", { count: "exact", head: true }),
+        supabase.from("orders").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("reviews").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("reviews").select("*", { count: "exact", head: true }).eq("status", "approved"),
+        supabase.from("custom_quotes").select("*", { count: "exact", head: true }).eq("status", "new"),
+      ]);
+      return {
+        products: products.count ?? 0,
+        orders: orders.count ?? 0,
+        pendingOrders: pendingOrders.count ?? 0,
+        reviewsPending: reviewsPending.count ?? 0,
+        reviewsApproved: reviewsApproved.count ?? 0,
+        quotesNew: quotesNew.count ?? 0,
+      };
+    },
+  });
+
   const tiles = [
-    { to: "/admin/dashboard", icon: LayoutDashboard, title: "Dashboard", desc: "Manage products, orders & variants" },
-    { to: "/admin/quotes", icon: MessageSquareReply, title: "Custom Quotes", desc: "Respond to customization requests" },
-    { to: "/admin/reviews", icon: Star, title: "Reviews", desc: "Approve or reject customer reviews" },
+    { to: "/admin/dashboard", icon: LayoutDashboard, title: "Manage Products", desc: "Add, edit, or remove products & variants", badge: stats?.products, badgeLabel: "total" },
+    { to: "/admin/quotes", icon: MessageSquareReply, title: "Custom Quotes", desc: "Respond to customization requests", badge: stats?.quotesNew, badgeLabel: "new" },
+    { to: "/admin/reviews", icon: Star, title: "Reviews", desc: "Approve or reject customer reviews", badge: stats?.reviewsPending, badgeLabel: "pending" },
   ];
 
   return (
@@ -23,9 +49,16 @@ const AdminPortal = () => {
             <ShieldCheck className="w-5 h-5 text-vendel-gold" />
             <span className="font-heading text-lg">Vendel Bakes · Admin</span>
           </div>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/"><ArrowLeft className="w-4 h-4 mr-1.5" /> Customer site</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/"><ArrowLeft className="w-4 h-4 mr-1.5" /> Customer site</Link>
+            </Button>
+            {user && (
+              <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate("/admin/login"); }}>
+                <LogOut className="w-4 h-4 mr-1.5" /> Sign out
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -62,21 +95,50 @@ const AdminPortal = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {tiles.map(({ to, icon: Icon, title, desc }) => (
-              <Link key={to} to={to} className="group">
-                <Card className="h-full transition-all hover:shadow-lg hover:-translate-y-0.5 border-vendel-gold/20">
-                  <CardContent className="p-6">
-                    <div className="w-12 h-12 rounded-xl bg-vendel-gold/15 flex items-center justify-center mb-4 group-hover:bg-vendel-gold/25 transition-colors">
-                      <Icon className="w-6 h-6 text-vendel-gold" />
+          <>
+            {/* Stats */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-10">
+              {[
+                { icon: Package, label: "Products", value: stats?.products ?? "—", hint: "in catalog" },
+                { icon: ShoppingBag, label: "Orders", value: stats?.orders ?? "—", hint: `${stats?.pendingOrders ?? 0} pending` },
+                { icon: Star, label: "Reviews", value: stats?.reviewsApproved ?? "—", hint: `${stats?.reviewsPending ?? 0} pending` },
+                { icon: Clock, label: "New quotes", value: stats?.quotesNew ?? "—", hint: "awaiting response" },
+              ].map(({ icon: Icon, label, value, hint }) => (
+                <Card key={label} className="border-vendel-gold/20">
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
+                      <Icon className="w-4 h-4 text-vendel-gold" />
                     </div>
-                    <h3 className="font-heading text-xl mb-1">{title}</h3>
-                    <p className="text-sm text-muted-foreground">{desc}</p>
+                    <div className="font-heading text-3xl">{value}</div>
+                    <p className="text-xs text-muted-foreground mt-1">{hint}</p>
                   </CardContent>
                 </Card>
-              </Link>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            {/* Manage tiles */}
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {tiles.map(({ to, icon: Icon, title, desc, badge, badgeLabel }) => (
+                <Link key={to} to={to} className="group">
+                  <Card className="h-full transition-all hover:shadow-lg hover:-translate-y-0.5 border-vendel-gold/20">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-vendel-gold/15 flex items-center justify-center group-hover:bg-vendel-gold/25 transition-colors">
+                          <Icon className="w-6 h-6 text-vendel-gold" />
+                        </div>
+                        {badge != null && Number(badge) > 0 && (
+                          <Badge variant="secondary">{badge} {badgeLabel}</Badge>
+                        )}
+                      </div>
+                      <h3 className="font-heading text-xl mb-1">{title}</h3>
+                      <p className="text-sm text-muted-foreground">{desc}</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </>
         )}
       </main>
 
