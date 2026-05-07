@@ -2,16 +2,42 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShieldCheck, LayoutDashboard, MessageSquareReply, Star, LogIn, UserPlus, ArrowLeft } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ShieldCheck, LayoutDashboard, MessageSquareReply, Star, LogIn, UserPlus, ArrowLeft, Package, ShoppingBag, Clock, LogOut } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminPortal = () => {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isAdmin, loading, signOut } = useAuth();
   const navigate = useNavigate();
 
+  const { data: stats } = useQuery({
+    queryKey: ["admin-portal-stats"],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const [products, orders, pendingOrders, reviewsPending, reviewsApproved, quotesNew] = await Promise.all([
+        supabase.from("products").select("*", { count: "exact", head: true }),
+        supabase.from("orders").select("*", { count: "exact", head: true }),
+        supabase.from("orders").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("reviews").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("reviews").select("*", { count: "exact", head: true }).eq("status", "approved"),
+        supabase.from("custom_quotes").select("*", { count: "exact", head: true }).eq("status", "new"),
+      ]);
+      return {
+        products: products.count ?? 0,
+        orders: orders.count ?? 0,
+        pendingOrders: pendingOrders.count ?? 0,
+        reviewsPending: reviewsPending.count ?? 0,
+        reviewsApproved: reviewsApproved.count ?? 0,
+        quotesNew: quotesNew.count ?? 0,
+      };
+    },
+  });
+
   const tiles = [
-    { to: "/admin/dashboard", icon: LayoutDashboard, title: "Dashboard", desc: "Manage products, orders & variants" },
-    { to: "/admin/quotes", icon: MessageSquareReply, title: "Custom Quotes", desc: "Respond to customization requests" },
-    { to: "/admin/reviews", icon: Star, title: "Reviews", desc: "Approve or reject customer reviews" },
+    { to: "/admin/dashboard", icon: LayoutDashboard, title: "Manage Products", desc: "Add, edit, or remove products & variants", badge: stats?.products, badgeLabel: "total" },
+    { to: "/admin/quotes", icon: MessageSquareReply, title: "Custom Quotes", desc: "Respond to customization requests", badge: stats?.quotesNew, badgeLabel: "new" },
+    { to: "/admin/reviews", icon: Star, title: "Reviews", desc: "Approve or reject customer reviews", badge: stats?.reviewsPending, badgeLabel: "pending" },
   ];
 
   return (
