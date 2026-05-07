@@ -33,7 +33,7 @@ const AdminOnboarding = () => {
     }
 
     toast({ title: "Admin access ready", description: "Your role is active for the bakery dashboard." });
-    navigate("/admin");
+    navigate("/admin/dashboard");
   };
 
   return (
@@ -83,7 +83,7 @@ const AdminOnboarding = () => {
                 {isAdmin ? "You can continue to the admin dashboard." : "Claim admin access for this account if no admin has been created yet."}
               </p>
             </div>
-            <Button onClick={isAdmin ? () => navigate("/admin") : handleClaim} disabled={claiming}>
+            <Button onClick={isAdmin ? () => navigate("/admin/dashboard") : handleClaim} disabled={claiming}>
               {claiming ? "Setting up…" : isAdmin ? "Open Dashboard" : "Claim Admin Role"}
             </Button>
           </CardContent>
