@@ -49,9 +49,16 @@ const AdminPortal = () => {
             <ShieldCheck className="w-5 h-5 text-vendel-gold" />
             <span className="font-heading text-lg">Vendel Bakes · Admin</span>
           </div>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/"><ArrowLeft className="w-4 h-4 mr-1.5" /> Customer site</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/"><ArrowLeft className="w-4 h-4 mr-1.5" /> Customer site</Link>
+            </Button>
+            {user && (
+              <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate("/admin/login"); }}>
+                <LogOut className="w-4 h-4 mr-1.5" /> Sign out
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
