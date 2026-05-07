@@ -95,21 +95,50 @@ const AdminPortal = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {tiles.map(({ to, icon: Icon, title, desc }) => (
-              <Link key={to} to={to} className="group">
-                <Card className="h-full transition-all hover:shadow-lg hover:-translate-y-0.5 border-vendel-gold/20">
-                  <CardContent className="p-6">
-                    <div className="w-12 h-12 rounded-xl bg-vendel-gold/15 flex items-center justify-center mb-4 group-hover:bg-vendel-gold/25 transition-colors">
-                      <Icon className="w-6 h-6 text-vendel-gold" />
+          <>
+            {/* Stats */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-10">
+              {[
+                { icon: Package, label: "Products", value: stats?.products ?? "—", hint: "in catalog" },
+                { icon: ShoppingBag, label: "Orders", value: stats?.orders ?? "—", hint: `${stats?.pendingOrders ?? 0} pending` },
+                { icon: Star, label: "Reviews", value: stats?.reviewsApproved ?? "—", hint: `${stats?.reviewsPending ?? 0} pending` },
+                { icon: Clock, label: "New quotes", value: stats?.quotesNew ?? "—", hint: "awaiting response" },
+              ].map(({ icon: Icon, label, value, hint }) => (
+                <Card key={label} className="border-vendel-gold/20">
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
+                      <Icon className="w-4 h-4 text-vendel-gold" />
                     </div>
-                    <h3 className="font-heading text-xl mb-1">{title}</h3>
-                    <p className="text-sm text-muted-foreground">{desc}</p>
+                    <div className="font-heading text-3xl">{value}</div>
+                    <p className="text-xs text-muted-foreground mt-1">{hint}</p>
                   </CardContent>
                 </Card>
-              </Link>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            {/* Manage tiles */}
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {tiles.map(({ to, icon: Icon, title, desc, badge, badgeLabel }) => (
+                <Link key={to} to={to} className="group">
+                  <Card className="h-full transition-all hover:shadow-lg hover:-translate-y-0.5 border-vendel-gold/20">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-vendel-gold/15 flex items-center justify-center group-hover:bg-vendel-gold/25 transition-colors">
+                          <Icon className="w-6 h-6 text-vendel-gold" />
+                        </div>
+                        {badge != null && Number(badge) > 0 && (
+                          <Badge variant="secondary">{badge} {badgeLabel}</Badge>
+                        )}
+                      </div>
+                      <h3 className="font-heading text-xl mb-1">{title}</h3>
+                      <p className="text-sm text-muted-foreground">{desc}</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </>
         )}
       </main>
 
